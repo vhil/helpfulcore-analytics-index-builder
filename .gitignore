@@ -6,3 +6,4 @@ bin*/
 .vs/config/applicationhost.config
 *.user
 *.suo
+src/.vs/
