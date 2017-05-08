@@ -1,8 +1,8 @@
 ﻿namespace Helpfulcore.AnalyticsIndexBuilder
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Collections.Concurrent;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -19,6 +19,7 @@
     public class AnalyticsIndexBuilder : IAnalyticsIndexBuilder
     {
         protected readonly int BatchSize;
+        protected readonly int ConcurrentThreads;
         protected readonly IAnalyticsSearchService AnalyticsSearchService;
         protected readonly IContactsSelectorProvider ContactSelector;
         protected ILoggingService Logger;
@@ -27,7 +28,8 @@
             IAnalyticsSearchService analyticsSearchService, 
             IContactsSelectorProvider contactSelector, 
             ILoggingService logger,
-            string batchSize): this(analyticsSearchService, contactSelector, logger, int.Parse(batchSize))
+            string batchSize,
+            string concurrentThreads): this(analyticsSearchService, contactSelector, logger, int.Parse(batchSize), int.Parse(concurrentThreads))
         {
         }
 
@@ -35,12 +37,14 @@
             IAnalyticsSearchService analyticsSearchService,
             IContactsSelectorProvider contactSelector,
             ILoggingService logger,
-            int batchSize)
+            int batchSize,
+            int concurrentThreads)
         {
             this.AnalyticsSearchService = analyticsSearchService;
             this.ContactSelector = contactSelector;
             this.Logger = logger;
             this.BatchSize = batchSize;
+            this.ConcurrentThreads = concurrentThreads;
         }
 
         public virtual bool IsBusy { get; protected set; }
@@ -63,6 +67,8 @@
                 this.UpdateContactsIndex(ids.Distinct());
             });
         }
+
+        #region to implement
 
         [Obsolete("Not implemented at the moment.", true)]
         public virtual void RebuildVisitEntriesIndex()
@@ -100,6 +106,8 @@
             });
         }
 
+        #endregion
+
         protected virtual void UpdateContactsIndex(IEnumerable<Guid> contactIds)
         {
             var contacts = contactIds as Guid[] ?? contactIds.ToArray();
@@ -109,8 +117,9 @@
             var factory = Factory.CreateObject("model/entities/contact/factory", true) as IContactFactory;
 
             long count = 0;
-
-            this.Logger.Info($"Updating contact indexables progress: {count} of {contacts.Length} (0.00%)", this);
+            long updated = 0;
+            long failed = 0;
+            this.Logger.Info($"Updating contact indexables progress: {count} of {contacts.Length} (0.00%). Updated: {updated}, Failed: {failed}", this);
 
             foreach (var contactId in contacts.Distinct())
             {
@@ -119,40 +128,49 @@
 
                 if (count % this.BatchSize == 0 || count == contacts.Length)
                 {
-                    var indexables = this.LoadContactFields(dbContacts);
+                    try
+                    { 
+                        var indexables = this.LoadContactFields(dbContacts);
+                        var indexedContacts = this.AnalyticsSearchService.GetIndexedContacts(dbContacts.Select(c => c.Id.Guid));
+                        this.AnalyticsSearchService.RemoveContactsFromIndex(indexedContacts);
+                        this.AnalyticsSearchService.UpdateContactsInIndex(indexables);
 
-                    var indexedContacts = this.AnalyticsSearchService.GetIndexedContacts(indexables.Keys);
-                    this.AnalyticsSearchService.RemoveContactsFromIndex(indexedContacts);
-                    this.AnalyticsSearchService.UpdateContactsInIndex(indexables.Values);
+                        updated += dbContacts.Count;
+                    }
+                    catch(Exception ex)
+                    {
+                        failed += dbContacts.Count;
+                        this.Logger.Error($"Error while updating batch of {dbContacts.Count} contact indexables. {ex.Message}", this);
+                    }
+                    finally
+                    {
+                        var percentage = 100 * count / (decimal)contacts.Length;
+                        this.Logger.Info($"Updating contact indexables progress: {count} of {contacts.Length} ({percentage:#0.00}%). Updated: {updated}, Failed: {failed}", this);
 
-                    var percentage = 100 * count / (decimal)contacts.Length;
-                    this.Logger.Info($"Updating contact indexables progress: {count} of {contacts.Length} ({percentage:#0.00}%).", this);
-
-                    dbContacts.Clear();
+                        dbContacts.Clear();
+                    }
                 }
             }
         }
 
-        protected virtual IDictionary<Guid, ContactIndexable> LoadContactFields(IEnumerable<IContact> dbContacts)
+        protected virtual IEnumerable<ContactIndexable> LoadContactFields(IEnumerable<IContact> dbContacts)
         {
             // loading contact indexables could be a heavy operation 
             // so executing it in multiple threads for performance
 
-            var indexables = new ConcurrentDictionary<Guid, ContactIndexable>();
+            var indexables = new ConcurrentBag<ContactIndexable>();
 
-            Parallel.ForEach(dbContacts, contact =>
+            var options = new ParallelOptions {MaxDegreeOfParallelism = this.ConcurrentThreads};
+            Parallel.ForEach(dbContacts.Distinct(), options, contact =>
             {
-                if (!indexables.ContainsKey(contact.Id.Guid))
-                {
-                    // this will execute "contactindexable.loadfields" pipeline to load field values;
-                    // creating ContactIndexable without visit context will take previously stored visit data from mongo.
-                    var indexable = new ContactIndexable(contact);
+                // this will execute "contactindexable.loadfields" pipeline to load field values;
+                // creating ContactIndexable without visit context will take previously stored visit data from mongo.
+                var indexable = new ContactIndexable(contact);
 
-                    indexables.TryAdd(contact.Id.Guid, indexable);
-                }
+                indexables.Add(indexable);
             });
 
-            return indexables;
+            return indexables.ToArray();
         }
 
         protected virtual void SafeExecution(string actionDescription, Action action)

@@ -126,7 +126,7 @@
 
         protected virtual void SafeExecution(string actionDescription, Action action)
         {
-            this.Logger.Info($"{actionDescription} '{this.AnalyticsIndexName}' content search index..", this);
+            this.Logger.Debug($"{actionDescription} '{this.AnalyticsIndexName}' content search index..", this);
 
             try
             {

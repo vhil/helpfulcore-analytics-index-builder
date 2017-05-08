@@ -24,7 +24,7 @@
         {
             return this.SafeExecution($"getting contact ids to re-index", () =>
             {
-                var contactIds = this.GetContactIds();
+                var contactIds = this.GetContactIds().Where(x => !x._id.Equals(default(Guid)));
 
                 if (this.Filters.Count > 0)
                 {
