@@ -16,6 +16,8 @@
 
         protected AbstractContactSelectorProvider(ILoggingService logger)
         {
+            if (logger == null) throw new ArgumentNullException(nameof(logger));
+
             this.Logger = logger;
             this.Filters = new ArrayList();
         }

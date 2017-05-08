@@ -28,8 +28,13 @@
             IAnalyticsSearchService analyticsSearchService, 
             IContactsSelectorProvider contactSelector, 
             ILoggingService logger,
-            string batchSize,
-            string concurrentThreads): this(analyticsSearchService, contactSelector, logger, int.Parse(batchSize), int.Parse(concurrentThreads))
+            string batchSize = "500",
+            string concurrentThreads = "4"): this(
+                analyticsSearchService, 
+                contactSelector, 
+                logger, 
+                int.Parse(batchSize), 
+                int.Parse(concurrentThreads))
         {
         }
 
@@ -37,9 +42,13 @@
             IAnalyticsSearchService analyticsSearchService,
             IContactsSelectorProvider contactSelector,
             ILoggingService logger,
-            int batchSize,
-            int concurrentThreads)
+            int batchSize = 500,
+            int concurrentThreads = 4)
         {
+            if (analyticsSearchService == null) throw new ArgumentNullException(nameof(analyticsSearchService));
+            if (contactSelector == null) throw new ArgumentNullException(nameof(contactSelector));
+            if (logger == null) throw new ArgumentNullException(nameof(logger));
+
             this.AnalyticsSearchService = analyticsSearchService;
             this.ContactSelector = contactSelector;
             this.Logger = logger;
@@ -60,11 +69,11 @@
 
         public virtual void RebuildContactEntriesIndex(IEnumerable<Guid> contactIds)
         {
-            var ids = contactIds as Guid[] ?? contactIds.ToArray();
+            var ids = contactIds as ICollection<Guid> ?? contactIds.ToArray();
 
-            this.SafeExecution($"rebuilding type:contact entries index for {ids.Length} contacts", () =>
+            this.SafeExecution($"rebuilding type:contact entries index for {ids.Count} contacts", () =>
             {
-                this.UpdateContactsIndex(ids.Distinct());
+                this.UpdateContactsIndex(ids);
             });
         }
 
@@ -110,46 +119,54 @@
 
         protected virtual void UpdateContactsIndex(IEnumerable<Guid> contactIds)
         {
-            var contacts = contactIds as Guid[] ?? contactIds.ToArray();
+            var contacts = contactIds?.Distinct().ToArray() ?? new Guid[0];
 
             var dbContacts = new List<IContact>();
-
-            var factory = Factory.CreateObject("model/entities/contact/factory", true) as IContactFactory;
 
             long count = 0;
             long updated = 0;
             long failed = 0;
-            this.Logger.Info($"Updating contact indexables progress: {count} of {contacts.Length} (0.00%). Updated: {updated}, Failed: {failed}", this);
 
-            foreach (var contactId in contacts.Distinct())
-            {
-                dbContacts.Add(DataAdapterManager.Provider.LoadContactReadOnly(new ID(contactId), factory));
-                count++;
+            if (contacts.Any())
+            { 
+                this.Logger.Info($"Updating contact indexables progress: {count} of {contacts.Length} (0.00%). Updated: {updated}, Failed: {failed}", this);
 
-                if (count % this.BatchSize == 0 || count == contacts.Length)
+                var factory = Factory.CreateObject("model/entities/contact/factory", true) as IContactFactory;
+
+                foreach (var contactId in contacts)
                 {
-                    try
-                    { 
-                        var indexables = this.LoadContactFields(dbContacts);
-                        var indexedContacts = this.AnalyticsSearchService.GetIndexedContacts(dbContacts.Select(c => c.Id.Guid));
-                        this.AnalyticsSearchService.RemoveContactsFromIndex(indexedContacts);
-                        this.AnalyticsSearchService.UpdateContactsInIndex(indexables);
+                    dbContacts.Add(DataAdapterManager.Provider.LoadContactReadOnly(new ID(contactId), factory));
+                    count++;
 
-                        updated += dbContacts.Count;
-                    }
-                    catch(Exception ex)
+                    if (count % this.BatchSize == 0 || count == contacts.Length)
                     {
-                        failed += dbContacts.Count;
-                        this.Logger.Error($"Error while updating batch of {dbContacts.Count} contact indexables. {ex.Message}", this);
-                    }
-                    finally
-                    {
-                        var percentage = 100 * count / (decimal)contacts.Length;
-                        this.Logger.Info($"Updating contact indexables progress: {count} of {contacts.Length} ({percentage:#0.00}%). Updated: {updated}, Failed: {failed}", this);
+                        try
+                        { 
+                            var indexables = this.LoadContactFields(dbContacts);
+                            var indexedContacts = this.AnalyticsSearchService.GetIndexedContacts(dbContacts.Select(c => c.Id.Guid));
+                            this.AnalyticsSearchService.RemoveContactsFromIndex(indexedContacts);
+                            this.AnalyticsSearchService.UpdateContactsInIndex(indexables);
 
-                        dbContacts.Clear();
+                            updated += dbContacts.Count;
+                        }
+                        catch(Exception ex)
+                        {
+                            failed += dbContacts.Count;
+                            this.Logger.Error($"Error while updating batch of {dbContacts.Count} contact indexables. {ex.Message}", this);
+                        }
+                        finally
+                        {
+                            var percentage = 100 * count / (decimal)contacts.Length;
+                            this.Logger.Info($"Updating contact indexables progress: {count} of {contacts.Length} ({percentage:#0.00}%). Updated: {updated}, Failed: {failed}", this);
+
+                            dbContacts.Clear();
+                        }
                     }
                 }
+            }
+            else
+            {
+                this.Logger.Info("No contacts to update.", this);
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿namespace Helpfulcore.AnalyticsIndexBuilder.MongoDb
 {
+    using System;
     using System.Collections.Generic;
     using Sitecore.Analytics.Data.DataAccess.MongoDb;
 
@@ -13,6 +14,7 @@
         public MongoDbContactSelectorProvider(string analyticsConnectionString, ILoggingService logger)
             :base(logger)
         {
+            if (string.IsNullOrEmpty(analyticsConnectionString)) throw new ArgumentNullException(nameof(analyticsConnectionString));
             this.AnalyticsMongoConnectionString = analyticsConnectionString;
         }
 
