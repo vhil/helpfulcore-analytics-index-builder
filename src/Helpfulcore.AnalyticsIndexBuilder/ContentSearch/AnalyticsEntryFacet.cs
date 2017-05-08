@@ -8,7 +8,9 @@
         {
             this.Type = type;
             this.Count = count;
-            this.ActionsAvailable = type.Equals("contact", StringComparison.CurrentCultureIgnoreCase);
+            this.ActionsAvailable = 
+                type.Equals("contact", StringComparison.CurrentCultureIgnoreCase)
+                || type.Equals("address", StringComparison.CurrentCultureIgnoreCase);
         }
 
         public string Type { get; protected set; }

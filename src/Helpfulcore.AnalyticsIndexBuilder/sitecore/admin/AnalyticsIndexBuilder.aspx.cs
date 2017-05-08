@@ -46,11 +46,20 @@
                     this.GetFacets();
                 }
 
-                if (task == "RebuildAll")
+                if (task == "RebuildContacts")
                 {
                     ThreadPool.QueueUserWorkItem(i =>
                     {
                         AnalyticsIndexBuilder.RebuildContactEntriesIndex();
+                        this.LogQueue.EndLogging();
+                    });
+                }
+
+                if (task == "RebuildAddresses")
+                {
+                    ThreadPool.QueueUserWorkItem(i =>
+                    {
+                        AnalyticsIndexBuilder.RebuildAddressEntriesIndex();
                         this.LogQueue.EndLogging();
                     });
                 }

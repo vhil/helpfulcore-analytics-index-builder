@@ -1,4 +1,6 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder
+﻿using Sitecore.Analytics.Model.Framework;
+
+namespace Helpfulcore.AnalyticsIndexBuilder
 {
     using System;
     using System.Collections.Generic;
@@ -106,16 +108,27 @@
             });
         }
 
-        [Obsolete("Not implemented at the moment.", true)]
         public virtual void RebuildAddressEntriesIndex()
         {
             this.SafeExecution($"rebuilding type:address entries index", () =>
             {
-                throw new NotImplementedException();
+                var contactIds = this.ContactSelector.GetContactIdsToReindex();
+                this.UpdateContactAddressIndex(contactIds.Distinct());
+            });
+        }
+
+
+        public virtual void RebuildAddressEntriesIndex(IEnumerable<Guid> contactIds)
+        {
+            this.SafeExecution($"rebuilding type:address entries index", () =>
+            {
+                this.UpdateContactAddressIndex(contactIds.Distinct());
             });
         }
 
         #endregion
+
+        #region type:contact
 
         protected virtual void UpdateContactsIndex(IEnumerable<Guid> contactIds)
         {
@@ -143,9 +156,9 @@
                         try
                         { 
                             var indexables = this.LoadContactFields(dbContacts);
-                            var indexedContacts = this.AnalyticsSearchService.GetIndexedContacts(dbContacts.Select(c => c.Id.Guid));
-                            this.AnalyticsSearchService.RemoveContactsFromIndex(indexedContacts);
-                            this.AnalyticsSearchService.UpdateContactsInIndex(indexables);
+                            //var indexedContacts = this.AnalyticsSearchService.GetIndexedContacts(dbContacts.Select(c => c.Id.Guid));
+                            //this.AnalyticsSearchService.RemoveContactsFromIndex(indexedContacts);
+                            this.AnalyticsSearchService.UpdateIndexables(indexables);
 
                             updated += dbContacts.Count;
                         }
@@ -189,6 +202,108 @@
 
             return indexables.ToArray();
         }
+
+        #endregion
+
+        #region type:address
+
+        protected virtual void UpdateContactAddressIndex(IEnumerable<Guid> contactIds)
+        {
+            var contacts = contactIds?.Distinct().ToArray() ?? new Guid[0];
+
+            if (contacts.Any())
+            {
+                var factory = Factory.CreateObject("model/entities/contact/factory", true) as IContactFactory;
+
+                var dbAddresses = new List<Tuple<string, Guid, IAddress>>();
+
+                this.Logger.Info($"Loading contact addresses for {contacts.Length} contacts...", this);
+
+                foreach (var contactId in contacts)
+                {
+                    var contact = DataAdapterManager.Provider.LoadContactReadOnly(new ID(contactId), factory);
+                    var addresses = this.GetContactAddresses(contact);
+                    dbAddresses.AddRange(addresses.Select(address => new Tuple<string, Guid, IAddress>(address.Key, contactId, address.Value)));
+                }
+
+                long count = 0;
+                long updated = 0;
+                long failed = 0;
+
+                this.Logger.Info($"Updating address indexables progress: {count} of {contacts.Length} (0.00%). Updated: {updated}, Failed: {failed}", this);
+
+                var addressList = new List<Tuple<string, Guid, IAddress>>();
+                foreach (var address in dbAddresses)
+                {
+                    addressList.Add(address);
+                    count++;
+
+                    if (count % this.BatchSize == 0 || count == dbAddresses.Count)
+                    {
+                        try
+                        {
+                            var indexables = this.LoadContactAddressFields(addressList);
+                            this.AnalyticsSearchService.UpdateIndexables(indexables);
+
+                            updated += addressList.Count;
+                        }
+                        catch (Exception ex)
+                        {
+                            failed += addressList.Count;
+                            this.Logger.Error($"Error while updating batch of {addressList.Count} address indexables. {ex.Message}", this);
+                        }
+                        finally
+                        {
+                            var percentage = 100 * count / (decimal)contacts.Length;
+                            this.Logger.Info($"Updating address indexables progress: {count} of {contacts.Length} ({percentage:#0.00}%). Updated: {updated}, Failed: {failed}", this);
+
+                            addressList.Clear();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                this.Logger.Info("No addresses to update.", this);
+            }
+        }
+
+        protected virtual IEnumerable<AddressIndexable> LoadContactAddressFields(IEnumerable<Tuple<string, Guid, IAddress>> addresses)
+        {
+            var indexables = new ConcurrentBag<AddressIndexable>();
+
+            var options = new ParallelOptions { MaxDegreeOfParallelism = this.ConcurrentThreads };
+            Parallel.ForEach(addresses, options, address =>
+            {
+                // this will execute "contacaddresstindexable.loadfields" pipeline to load field values;
+                // creating ContactIndexable without visit context will take previously stored visit data from mongo.
+                var indexable = new AddressIndexable(address.Item1, address.Item2, address.Item3);
+
+                indexables.Add(indexable);
+                
+            });
+
+            return indexables.ToArray();
+        }
+
+        protected virtual Dictionary<string, IAddress> GetContactAddresses(IFaceted contact)
+        {
+            var dictionary = new Dictionary<string, IAddress>();
+            var facet = contact.Facets.FirstOrDefault(kvp => kvp.Value is IContactAddresses).Value;
+
+            if (facet != null)
+            {
+                var contactAddresses = (IContactAddresses)facet;
+                foreach (var key in contactAddresses.Entries.Keys)
+                {
+                    dictionary.Add(key, contactAddresses.Entries[key]);
+                }
+            }
+
+            return dictionary;
+        }
+
+        #endregion
 
         protected virtual void SafeExecution(string actionDescription, Action action)
         {

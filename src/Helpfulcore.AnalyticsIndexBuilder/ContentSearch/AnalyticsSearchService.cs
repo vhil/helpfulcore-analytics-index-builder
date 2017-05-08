@@ -58,19 +58,19 @@
             }
         }
 
-        public virtual void UpdateContactsInIndex(IEnumerable<ContactIndexable> contacts)
+        public virtual void UpdateIndexables(IEnumerable<AbstractIndexable> indexablesToUpdate)
         {
-            var indexables = contacts as ICollection<ContactIndexable> ?? contacts.ToList();
+            var indexables = indexablesToUpdate as ICollection<AbstractIndexable> ?? indexablesToUpdate.ToList();
 
             this.SafeExecution($"Updating {indexables.Count} indexed contacts in", () =>
             {
                 using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateUpdateContext())
                 {
-                    foreach (var contact in indexables)
+                    foreach (var indexable in indexables)
                     {
-                        var updateTerm = new Term("_uniqueid", contact.UniqueId.Value.ToString());
-                        var executionContext = contact.Culture != null ? new CultureExecutionContext(contact.Culture) : null;
-                        var document = this.BuildIndexableDocument(contact, context);
+                        var updateTerm = new Term("_uniqueid", indexable.UniqueId.Value.ToString());
+                        var executionContext = indexable.Culture != null ? new CultureExecutionContext(indexable.Culture) : null;
+                        var document = this.BuildIndexableDocument(indexable, context);
 
                         context.UpdateDocument(document, updateTerm, executionContext);
                     }
@@ -80,9 +80,9 @@
             });
         }
 
-        public virtual void RemoveContactsFromIndex(IEnumerable<IndexedContact> contacts)
+        public virtual void RemoveContactsFromIndex(IEnumerable<AbstractIndexable> contacts)
         {
-            var indexables = contacts as ICollection<IndexedContact> ?? contacts.ToList();
+            var indexables = contacts as ICollection<AbstractIndexable> ?? contacts.ToList();
 
             this.SafeExecution($"Removing {indexables.Count} indexed contacts from", () =>
             {

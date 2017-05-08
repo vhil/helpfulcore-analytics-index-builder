@@ -65,7 +65,7 @@
                                     <td>
                                         <% if (facet.ActionsAvailable)
                                             { %>
-                                        <button type="button" class="btn btn-success btn-xs btn-active btn-rebuild-<%=facet.Type%>">Rebuild indexables for all known contacts</button>
+                                        <button type="button" class="btn btn-success btn-xs btn-active btn-rebuild-<%=facet.Type%>">Rebuild <%=facet.Type%> indexables</button>
                                         <%} %>
                                     </td>
                                     <td class="action-status text-success"></td>
@@ -97,8 +97,13 @@
         $(function () {
             $(".btn-rebuild-contact").on("click", function (e) {
                 disableAllButtons(this);
-                
-                rebuildAll();
+                rebuildContacts();
+                getProgress();
+            });
+
+            $(".btn-rebuild-address").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildAddresses();
                 getProgress();
             });
 
@@ -176,8 +181,13 @@
                 }
             }
 
-            function rebuildAll() {
-                var url = window.location.href + getJoiner() + "task=RebuildAll";
+            function rebuildContacts() {
+                var url = window.location.href + getJoiner() + "task=RebuildContacts";
+                $.get(url, function (data) {});
+            }
+
+            function rebuildAddresses() {
+                var url = window.location.href + getJoiner() + "task=RebuildAddresses";
                 $.get(url, function (data) {});
             }
 
