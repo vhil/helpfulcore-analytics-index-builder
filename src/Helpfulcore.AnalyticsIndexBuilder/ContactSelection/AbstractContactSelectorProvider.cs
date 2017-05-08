@@ -1,16 +1,17 @@
-﻿using System.Collections;
-using Sitecore.Exceptions;
-
-namespace Helpfulcore.AnalyticsIndexBuilder.ContactSelection
+﻿namespace Helpfulcore.AnalyticsIndexBuilder.ContactSelection
 {
-    using Logging;
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
 
+    using Sitecore.Exceptions;
+    
+    using Helpfulcore.Logging;
+
     public abstract class AbstractContactSelectorProvider : IContactsSelectorProvider
     {
-        protected readonly ILoggingService Logger;
+        protected ILoggingService Logger;
         public ArrayList Filters { get; protected set; }
 
         protected AbstractContactSelectorProvider(ILoggingService logger)
@@ -35,7 +36,7 @@ namespace Helpfulcore.AnalyticsIndexBuilder.ContactSelection
 
                         if (selectionFilter == null)
                         {
-                            throw new ConfigurationException($"'{filter.GetType().Name}' can't be casted to IContactSelectionFilter. Please review your configuration.");
+                            throw new ConfigurationException($"'{filter.GetType().FullName}' can't be casted to IContactSelectionFilter. Please review your configuration.");
                         }
 
                         contactIds = contactIds.Where(selectionFilter.GetFilter());
@@ -50,7 +51,13 @@ namespace Helpfulcore.AnalyticsIndexBuilder.ContactSelection
             }) ?? Enumerable.Empty<Guid>();
         }
 
-        protected abstract IEnumerable<ContactIdentifiersData> GetContactIds();
+        public void ChangeLogger(ILoggingService logger)
+        {
+            if (logger != null)
+            {
+                this.Logger = logger;
+            }
+        }
 
         protected virtual TEntry SafeExecution<TEntry>(string actionDescription, Func<TEntry> action)
         {
@@ -67,5 +74,7 @@ namespace Helpfulcore.AnalyticsIndexBuilder.ContactSelection
 
             return default(TEntry);
         }
+
+        protected abstract IEnumerable<ContactIdentifiersData> GetContactIds();
     }
 }

@@ -3,16 +3,18 @@
     using System;
     using System.Threading;
     using Sitecore.Configuration;
-    using Logging;
-    using ContentSearch;
     using System.Web.Script.Serialization;
+
     using Sitecore.sitecore.admin;
+    using Helpfulcore.Logging;
+
+    using ContentSearch;
 
     public partial class AnalyticsIndexBuilderPage : AdminPage
     {
         private static readonly object InitializationSyncRoot = new object();
 
-        protected static IAnalyticsIndexBuilder AnalyticsIndexService;
+        protected static IAnalyticsIndexBuilder AnalyticsIndexBuilder;
         protected IAnalyticsSearchService AnalyticsSearchService;
         protected ProcessQueueLoggingProvider LogQueue;
         protected AnalyticsEntryFacetResult AnalyticsIndexFacets;
@@ -48,7 +50,7 @@
                 {
                     ThreadPool.QueueUserWorkItem(i =>
                     {
-                        AnalyticsIndexService.RebuildContactEntriesIndex();
+                        AnalyticsIndexBuilder.RebuildContactEntriesIndex();
                         this.LogQueue.EndLogging();
                     });
                 }
@@ -63,19 +65,22 @@
 
         private void Initialize()
         {
-            if (AnalyticsIndexService == null)
+            var pageLogger = (ILoggingService)Factory.CreateObject("helpfulcore/analytics.index.builder/logging/pageLoggingService", true);
+            this.AnalyticsSearchService = (IAnalyticsSearchService)Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsSearchService", true);
+            this.LogQueue = (ProcessQueueLoggingProvider)Factory.CreateObject("helpfulcore/analytics.index.builder/logging/providers/indexingQueueLog", true);
+
+            if (AnalyticsIndexBuilder == null)
             {
                 lock (InitializationSyncRoot)
                 {
-                    if (AnalyticsIndexService == null)
+                    if (AnalyticsIndexBuilder == null)
                     {
-                        AnalyticsIndexService = Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsIndexBuilder", true) as IAnalyticsIndexBuilder;
+                        // need to create specific static instance so it uses page logger.
+                        AnalyticsIndexBuilder = (IAnalyticsIndexBuilder)Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsIndexBuilder", true);
+                        AnalyticsIndexBuilder.ChangeLogger(pageLogger);
                     }
                 }
             }
-
-            this.AnalyticsSearchService = Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsSearchService", true) as IAnalyticsSearchService;
-            this.LogQueue = Factory.CreateObject("helpfulcore/analytics.index.builder/logging/providers/indexingQueueLog", true) as ProcessQueueLoggingProvider;
         }
 
         private void GetFacets()

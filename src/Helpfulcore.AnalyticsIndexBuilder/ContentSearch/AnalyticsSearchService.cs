@@ -5,22 +5,22 @@
     using System.Collections.Generic;
     using System.Linq;
 
+    using Sitecore.Configuration;
     using Sitecore.ContentSearch;
     using Sitecore.ContentSearch.Analytics.Models;
     using Sitecore.ContentSearch.Linq;
     using Sitecore.Reflection;
 
     using Lucene.Net.Index;
-    using Logging;
+    using Helpfulcore.Logging;
 
     public class AnalyticsSearchService : IAnalyticsSearchService
     {
-        protected readonly string AnalyticsIndexName;
-        protected readonly ILoggingService Logger;
+        protected string AnalyticsIndexName => Settings.GetSetting("ContentSearch.Analytics.IndexName", "sitecore_analytics_index"); 
+        protected ILoggingService Logger;
 
-        public AnalyticsSearchService(string analyticsIndexName, ILoggingService logger)
+        public AnalyticsSearchService(ILoggingService logger)
         {
-            this.AnalyticsIndexName = analyticsIndexName;
             this.Logger = logger;
         }
 
@@ -28,7 +28,7 @@
         {
             using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateSearchContext())
             {
-                // this includes filter for type:contact
+                // this includes query filter for type:contact
                 var facets = context.GetQueryable<AnalyticsEntry>().FacetOn(x => x.Type).GetFacets();
                 return new AnalyticsEntryFacetResult(facets);
             }
@@ -65,8 +65,6 @@
             {
                 using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateUpdateContext())
                 {
-                    this.Logger.Debug($"Updating {indexables.Count} contact indexables.", this);
-
                     foreach (var contact in indexables)
                     {
                         var updateTerm = new Term("_uniqueid", contact.UniqueId.Value.ToString());
@@ -137,6 +135,14 @@
             catch (Exception ex)
             {
                 this.Logger.Error($"Error while {actionDescription}. {ex.Message}", this, ex);
+            }
+        }
+
+        public void ChangeLogger(ILoggingService logger)
+        {
+            if (logger != null)
+            {
+                this.Logger = logger;
             }
         }
     }

@@ -1,25 +1,26 @@
 ﻿namespace Helpfulcore.AnalyticsIndexBuilder.MongoDb
 {
     using System.Collections.Generic;
-    using ContactSelection;
-    using Logging;
     using Sitecore.Analytics.Data.DataAccess.MongoDb;
+
+    using ContactSelection;
+    using Helpfulcore.Logging;
 
     public class MongoDbContactSelectorProvider : AbstractContactSelectorProvider
     {
-        protected readonly string AnalyticsMongoConnectionStringName;
+        protected readonly string AnalyticsMongoConnectionString;
 
-        public MongoDbContactSelectorProvider(string analyticsMongoConnectionStringName,  ILoggingService logger)
+        public MongoDbContactSelectorProvider(string analyticsConnectionString, ILoggingService logger)
             :base(logger)
         {
-            this.AnalyticsMongoConnectionStringName = analyticsMongoConnectionStringName;
+            this.AnalyticsMongoConnectionString = analyticsConnectionString;
         }
 
         protected override IEnumerable<ContactIdentifiersData> GetContactIds()
         {
-            this.Logger.Info($"Retrieving contact ids from '{this.AnalyticsMongoConnectionStringName}' mongo database...", this);
+            this.Logger.Info($"Retrieveing all contact id's from '{this.AnalyticsMongoConnectionString}' collection database.", this);
 
-            var driver = MongoDbDriver.FromConnectionString(this.AnalyticsMongoConnectionStringName);
+            var driver = MongoDbDriver.FromConnectionString(this.AnalyticsMongoConnectionString);
             return driver.Contacts.FindAllAs<ContactIdentifiersData>();
         }
     }

@@ -3,8 +3,9 @@
     using System;
     using System.Collections.Generic;
     using Sitecore.ContentSearch.Analytics.Models;
+    using Logging;
 
-    public interface IAnalyticsSearchService
+    public interface IAnalyticsSearchService : ILoggerChangeable
     {
         AnalyticsEntryFacetResult GetAnalyticsIndexFacets();
         IEnumerable<IndexedContact> GetIndexedContacts(IEnumerable<Guid> contactIds = null);

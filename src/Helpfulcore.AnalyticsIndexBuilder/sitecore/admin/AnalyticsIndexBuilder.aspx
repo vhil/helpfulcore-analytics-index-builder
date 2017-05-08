@@ -45,7 +45,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="col-md-7">
-                    <h3>Analytics Index Overview</h3>
+                    <h3>Analytics index overview</h3>
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
@@ -78,7 +78,6 @@
             </div>
         </div>
     </div>
-
     <div class="container block">
         <div class="row">
             <div class="col-md-12">
@@ -103,7 +102,7 @@
                 getProgress();
             });
 
-            if (<%=AnalyticsIndexService.IsBusy.ToString().ToLower()%>)
+            if (<%=AnalyticsIndexBuilder.IsBusy.ToString().ToLower()%>)
                 {
                 getProgress();
             }
@@ -157,17 +156,15 @@
                 var maxLines = 100;
                 log.append(messages);
 
-                // append messages, wait 200 ms, animate scrolling 300 ms, wait 200ms and trim log
-
                 setTimeout(function() {
                     log.animate({
                         scrollTop: log[0].scrollHeight - log.height()
                     }, 500);
                 }, 100);
 
-                setTimeout(function() {
-                    var lines = log.text().split("\n");
-                    if (lines.length > maxLines) {
+                var lines = log.text().split("\n");
+                if (lines.length > maxLines) {
+                    setTimeout(function() {
                         var newLines = [];
                         var start = lines.length - maxLines - 1;
                         for (var i = start; i < lines.length; i++) {
@@ -175,8 +172,8 @@
                         }
 
                         log.text(newLines.join("\n"));
-                    }
-                }, 300);
+                    }, 300);
+                }
             }
 
             function rebuildAll() {

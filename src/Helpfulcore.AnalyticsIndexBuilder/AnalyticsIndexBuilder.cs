@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -15,29 +14,28 @@
 
     using ContactSelection;
     using ContentSearch;
-    using Logging;
+    using Helpfulcore.Logging;
 
     public class AnalyticsIndexBuilder : IAnalyticsIndexBuilder
     {
+        protected readonly int BatchSize;
         protected readonly IAnalyticsSearchService AnalyticsSearchService;
         protected readonly IContactsSelectorProvider ContactSelector;
-        protected readonly ILoggingService Logger;
-        protected readonly int BatchSize;
-
-        public AnalyticsIndexBuilder(
-                IAnalyticsSearchService analyticsSearchService,
-                IContactsSelectorProvider contactSelector,
-                ILoggingService logger,
-                string batchSize = "500") 
-            : this(analyticsSearchService, contactSelector, logger, int.Parse(batchSize))
-        {
-        }
+        protected ILoggingService Logger;
 
         public AnalyticsIndexBuilder(
             IAnalyticsSearchService analyticsSearchService, 
             IContactsSelectorProvider contactSelector, 
-            ILoggingService logger, 
-            int batchSize = 500)
+            ILoggingService logger,
+            string batchSize): this(analyticsSearchService, contactSelector, logger, int.Parse(batchSize))
+        {
+        }
+
+        public AnalyticsIndexBuilder(
+            IAnalyticsSearchService analyticsSearchService,
+            IContactsSelectorProvider contactSelector,
+            ILoggingService logger,
+            int batchSize)
         {
             this.AnalyticsSearchService = analyticsSearchService;
             this.ContactSelector = contactSelector;
@@ -66,6 +64,7 @@
             });
         }
 
+        [Obsolete("Not implemented at the moment.", true)]
         public virtual void RebuildVisitEntriesIndex()
         {
             this.SafeExecution($"rebuilding type:visit entries index", () =>
@@ -74,6 +73,7 @@
             });
         }
 
+        [Obsolete("Not implemented at the moment.", true)]
         public virtual void RebuildVisitPageEntriesIndex()
         {
             this.SafeExecution($"rebuilding type:visitPage entries index", () =>
@@ -82,6 +82,7 @@
             });
         }
 
+        [Obsolete("Not implemented at the moment.", true)]
         public virtual void RebuildVisitPageEventEntriesIndex()
         {
             this.SafeExecution($"rebuilding type:visitPageEvent entries index", () =>
@@ -90,6 +91,7 @@
             });
         }
 
+        [Obsolete("Not implemented at the moment.", true)]
         public virtual void RebuildAddressEntriesIndex()
         {
             this.SafeExecution($"rebuilding type:address entries index", () =>
@@ -176,6 +178,16 @@
             {
                 this.IsBusy = false;
                 this.Logger.Info($"DONE {actionDescription}.", this);
+            }
+        }
+
+        public void ChangeLogger(ILoggingService logger)
+        {
+            if (logger != null)
+            {
+                this.Logger = logger;
+                this.AnalyticsSearchService.ChangeLogger(logger);
+                this.ContactSelector.ChangeLogger(logger);
             }
         }
     }
