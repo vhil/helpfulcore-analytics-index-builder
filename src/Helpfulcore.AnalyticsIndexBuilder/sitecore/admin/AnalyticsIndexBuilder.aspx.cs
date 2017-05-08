@@ -8,18 +8,17 @@
     using System.Web.Script.Serialization;
     using Sitecore.sitecore.admin;
 
-    public partial class AnalyticsIndexBuilder : AdminPage
+    public partial class AnalyticsIndexBuilderPage : AdminPage
     {
-        protected IAnalyticsIndexBuilder AnalyticsIndexService;
+        private static readonly object InitializationSyncRoot = new object();
+
+        protected static IAnalyticsIndexBuilder AnalyticsIndexService;
         protected IAnalyticsSearchService AnalyticsSearchService;
         protected ProcessQueueLoggingProvider LogQueue;
         protected AnalyticsEntryFacetResult AnalyticsIndexFacets;
          
-        public AnalyticsIndexBuilder()
+        public AnalyticsIndexBuilderPage()
         {
-            this.AnalyticsIndexService = Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsIndexBuilder", true) as IAnalyticsIndexBuilder;
-            this.AnalyticsSearchService = Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsSearchService", true) as IAnalyticsSearchService;
-            this.LogQueue = Factory.CreateObject("helpfulcore/analytics.index.builder/logging/providers/indexingQueueLog", true) as ProcessQueueLoggingProvider;
             this.AnalyticsIndexFacets = new AnalyticsEntryFacetResult();
         }
 
@@ -27,6 +26,7 @@
         {
             base.OnLoad(e);
             this.CheckSecurity();
+            this.Initialize();
 
             var task = this.Request.QueryString["task"];
 
@@ -48,7 +48,7 @@
                 {
                     ThreadPool.QueueUserWorkItem(i =>
                     {
-                        this.AnalyticsIndexService.RebuildContactEntriesIndex();
+                        AnalyticsIndexService.RebuildContactEntriesIndex();
                         this.LogQueue.EndLogging();
                     });
                 }
@@ -59,6 +59,23 @@
             }
 
             this.AnalyticsIndexFacets = this.AnalyticsSearchService.GetAnalyticsIndexFacets();
+        }
+
+        private void Initialize()
+        {
+            if (AnalyticsIndexService == null)
+            {
+                lock (InitializationSyncRoot)
+                {
+                    if (AnalyticsIndexService == null)
+                    {
+                        AnalyticsIndexService = Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsIndexBuilder", true) as IAnalyticsIndexBuilder;
+                    }
+                }
+            }
+
+            this.AnalyticsSearchService = Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsSearchService", true) as IAnalyticsSearchService;
+            this.LogQueue = Factory.CreateObject("helpfulcore/analytics.index.builder/logging/providers/indexingQueueLog", true) as ProcessQueueLoggingProvider;
         }
 
         private void GetFacets()

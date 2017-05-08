@@ -7,16 +7,19 @@
 
     public class MongoDbContactSelectorProvider : AbstractContactSelectorProvider
     {
-        protected readonly ILoggingService Logger;
+        protected readonly string AnalyticsMongoConnectionStringName;
 
-        public MongoDbContactSelectorProvider(ILoggingService logger)
+        public MongoDbContactSelectorProvider(string analyticsMongoConnectionStringName,  ILoggingService logger)
+            :base(logger)
         {
-            this.Logger = logger;
+            this.AnalyticsMongoConnectionStringName = analyticsMongoConnectionStringName;
         }
 
         protected override IEnumerable<ContactIdentifiersData> GetContactIds()
         {
-            var driver = MongoDbDriver.FromConnectionString("analytics");
+            this.Logger.Info($"Retrieving contact ids from '{this.AnalyticsMongoConnectionStringName}' mongo database...", this);
+
+            var driver = MongoDbDriver.FromConnectionString(this.AnalyticsMongoConnectionStringName);
             return driver.Contacts.FindAllAs<ContactIdentifiersData>();
         }
     }

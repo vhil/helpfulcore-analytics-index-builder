@@ -25,6 +25,15 @@
         protected readonly int BatchSize;
 
         public AnalyticsIndexBuilder(
+                IAnalyticsSearchService analyticsSearchService,
+                IContactsSelectorProvider contactSelector,
+                ILoggingService logger,
+                string batchSize = "500") 
+            : this(analyticsSearchService, contactSelector, logger, int.Parse(batchSize))
+        {
+        }
+
+        public AnalyticsIndexBuilder(
             IAnalyticsSearchService analyticsSearchService, 
             IContactsSelectorProvider contactSelector, 
             ILoggingService logger, 
@@ -57,7 +66,7 @@
             });
         }
 
-        public void RebuildVisitEntriesIndex()
+        public virtual void RebuildVisitEntriesIndex()
         {
             this.SafeExecution($"rebuilding type:visit entries index", () =>
             {
@@ -65,7 +74,7 @@
             });
         }
 
-        public void RebuildVisitPageEntriesIndex()
+        public virtual void RebuildVisitPageEntriesIndex()
         {
             this.SafeExecution($"rebuilding type:visitPage entries index", () =>
             {
@@ -73,7 +82,7 @@
             });
         }
 
-        public void RebuildVisitPageEventEntriesIndex()
+        public virtual void RebuildVisitPageEventEntriesIndex()
         {
             this.SafeExecution($"rebuilding type:visitPageEvent entries index", () =>
             {
@@ -81,7 +90,7 @@
             });
         }
 
-        public void RebuildAddressEntriesIndex()
+        public virtual void RebuildAddressEntriesIndex()
         {
             this.SafeExecution($"rebuilding type:address entries index", () =>
             {
@@ -97,45 +106,32 @@
 
             var factory = Factory.CreateObject("model/entities/contact/factory", true) as IContactFactory;
 
-            long loadElapsed = 0;
-            long fieldsElapsed = 0;
             long count = 0;
 
             this.Logger.Info($"Updating contact indexables progress: {count} of {contacts.Length} (0.00%)", this);
 
             foreach (var contactId in contacts.Distinct())
             {
-                var loadTimer = Stopwatch.StartNew();
-
                 dbContacts.Add(DataAdapterManager.Provider.LoadContactReadOnly(new ID(contactId), factory));
-
-                loadTimer.Stop();
-                loadElapsed += loadTimer.ElapsedMilliseconds;
-
                 count++;
 
                 if (count % this.BatchSize == 0 || count == contacts.Length)
                 {
-                    var fieldsTimer = Stopwatch.StartNew();
-
-                    var indexables = this.LoadContactFieldsParallel(dbContacts);
-
-                    fieldsTimer.Stop();
-                    fieldsElapsed += fieldsTimer.ElapsedMilliseconds;
+                    var indexables = this.LoadContactFields(dbContacts);
 
                     var indexedContacts = this.AnalyticsSearchService.GetIndexedContacts(indexables.Keys);
                     this.AnalyticsSearchService.RemoveContactsFromIndex(indexedContacts);
                     this.AnalyticsSearchService.UpdateContactsInIndex(indexables.Values);
 
                     var percentage = 100 * count / (decimal)contacts.Length;
-                    this.Logger.Info($"Updating contact indexables progress: {count} of {contacts.Length} ({percentage:#0.00}%). Load contact time: {loadElapsed} ms. Load fields time: {fieldsElapsed} ms.", this);
+                    this.Logger.Info($"Updating contact indexables progress: {count} of {contacts.Length} ({percentage:#0.00}%).", this);
 
                     dbContacts.Clear();
                 }
             }
         }
 
-        protected virtual IDictionary<Guid, ContactIndexable> LoadContactFieldsParallel(IEnumerable<IContact> dbContacts)
+        protected virtual IDictionary<Guid, ContactIndexable> LoadContactFields(IEnumerable<IContact> dbContacts)
         {
             // loading contact indexables could be a heavy operation 
             // so executing it in multiple threads for performance
@@ -159,9 +155,13 @@
 
         protected virtual void SafeExecution(string actionDescription, Action action)
         {
-            if (this.IsBusy) return;
+            if (this.IsBusy)
+            {
+                this.Logger.Warn($"Unable to execute {actionDescription}. AnalyticsIndexBuilder is busy at the moment with another operation.", this);
+                return;
+            }
 
-            this.Logger.Info($"Start {actionDescription}...", this);
+            this.Logger.Info($"Start {actionDescription}. Batch size is set to {this.BatchSize}...", this);
 
             try
             {

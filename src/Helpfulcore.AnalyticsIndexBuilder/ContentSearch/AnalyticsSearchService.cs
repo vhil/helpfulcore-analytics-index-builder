@@ -11,17 +11,20 @@
     using Sitecore.Reflection;
 
     using Lucene.Net.Index;
+    using Logging;
 
     public class AnalyticsSearchService : IAnalyticsSearchService
     {
         protected readonly string AnalyticsIndexName;
+        protected readonly ILoggingService Logger;
 
-        public AnalyticsSearchService(string analyticsIndexName)
+        public AnalyticsSearchService(string analyticsIndexName, ILoggingService logger)
         {
             this.AnalyticsIndexName = analyticsIndexName;
+            this.Logger = logger;
         }
 
-        public AnalyticsEntryFacetResult GetAnalyticsIndexFacets()
+        public virtual AnalyticsEntryFacetResult GetAnalyticsIndexFacets()
         {
             using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateSearchContext())
             {
@@ -31,7 +34,7 @@
             }
         }
 
-        public IEnumerable<IndexedContact> GetIndexedContacts(IEnumerable<Guid> contactIds = null)
+        public virtual IEnumerable<IndexedContact> GetIndexedContacts(IEnumerable<Guid> contactIds = null)
         {
             if (contactIds == null)
             {
@@ -54,37 +57,49 @@
             }
         }
 
-        public void UpdateContactsInIndex(IEnumerable<ContactIndexable> contacts)
+        public virtual void UpdateContactsInIndex(IEnumerable<ContactIndexable> contacts)
         {
-            using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateUpdateContext())
+            var indexables = contacts as ICollection<ContactIndexable> ?? contacts.ToList();
+
+            this.SafeExecution($"Updating {indexables.Count} indexed contacts in", () =>
             {
-                foreach (var contact in contacts)
+                using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateUpdateContext())
                 {
-                    var updateTerm = new Term("_uniqueid", contact.UniqueId.Value.ToString());
-                    var executionContext = contact.Culture != null ? new CultureExecutionContext(contact.Culture) : null;
-                    var document = this.BuildIndexableDocument(contact, context);
+                    this.Logger.Debug($"Updating {indexables.Count} contact indexables.", this);
 
-                    context.UpdateDocument(document, updateTerm, executionContext);
+                    foreach (var contact in indexables)
+                    {
+                        var updateTerm = new Term("_uniqueid", contact.UniqueId.Value.ToString());
+                        var executionContext = contact.Culture != null ? new CultureExecutionContext(contact.Culture) : null;
+                        var document = this.BuildIndexableDocument(contact, context);
+
+                        context.UpdateDocument(document, updateTerm, executionContext);
+                    }
+
+                    context.Commit();
                 }
-
-                context.Commit();
-            }
+            });
         }
 
-        public void RemoveContactsFromIndex(IEnumerable<IndexedContact> contacts)
+        public virtual void RemoveContactsFromIndex(IEnumerable<IndexedContact> contacts)
         {
-            using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateDeleteContext())
-            {
-                foreach (var contact in contacts)
-                {
-                    context.Delete(contact.UniqueId);
-                }
+            var indexables = contacts as ICollection<IndexedContact> ?? contacts.ToList();
 
-                context.Commit();
-            }
+            this.SafeExecution($"Removing {indexables.Count} indexed contacts from", () =>
+            {
+                using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateDeleteContext())
+                {
+                    foreach (var contact in indexables)
+                    {
+                        context.Delete(contact.UniqueId);
+                    }
+
+                    context.Commit();
+                }
+            });
         }
 
-        protected Dictionary<string, object> BuildIndexableDocument(IIndexable indexable, IProviderUpdateContext context)
+        protected virtual Dictionary<string, object> BuildIndexableDocument(IIndexable indexable, IProviderUpdateContext context)
         {
             var sitecoreIndexableItem = indexable as SitecoreIndexableItem;
             if (sitecoreIndexableItem != null)
@@ -109,6 +124,20 @@
             documentBuilder.AddBoost();
 
             return documentBuilder.Document.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+
+        protected virtual void SafeExecution(string actionDescription, Action action)
+        {
+            this.Logger.Info($"{actionDescription} '{this.AnalyticsIndexName}' content search index..", this);
+
+            try
+            {
+                action.Invoke();
+            }
+            catch (Exception ex)
+            {
+                this.Logger.Error($"Error while {actionDescription}. {ex.Message}", this, ex);
+            }
         }
     }
 }

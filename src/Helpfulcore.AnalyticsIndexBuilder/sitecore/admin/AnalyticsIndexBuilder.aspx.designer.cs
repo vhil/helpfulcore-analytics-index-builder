@@ -9,7 +9,7 @@
 
 namespace Helpfulcore.AnalyticsIndexBuilder.sitecore.admin
 {
-    public partial class AnalyticsIndexBuilder
+    public partial class AnalyticsIndexBuilderPage
     {
     }
 }

@@ -1,4 +1,5 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="AnalyticsIndexBuilder.aspx.cs" Inherits="Helpfulcore.AnalyticsIndexBuilder.sitecore.admin.AnalyticsIndexBuilder" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="AnalyticsIndexBuilder.aspx.cs" Inherits="Helpfulcore.AnalyticsIndexBuilder.sitecore.admin.AnalyticsIndexBuilderPage" %>
+<%@ Import Namespace="Helpfulcore.Logging" %>
 
 <!DOCTYPE html>
 
@@ -31,9 +32,13 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="jumbotron">
-            <h1>Sitecore Analytics Index Builder</h1>
+    <div class="jumbotron">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1>Sitecore Analytics Index Builder</h1>
+                </div>
+            </div>
         </div>
     </div>
     <div class="container">
@@ -59,7 +64,7 @@
                                     <td class="facet-count"><%=facet.Count %></td>
                                     <td>
                                         <% if (facet.ActionsAvailable)
-                                        { %>
+                                            { %>
                                         <button type="button" class="btn btn-success btn-xs btn-active btn-rebuild-<%=facet.Type%>">Rebuild indexables for all known contacts</button>
                                         <%} %>
                                     </td>
@@ -78,7 +83,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="col-md-12">
-                    <h3>Execution log <small>(last 200 lines)</small></h3>
+                    <h3>Execution log <small>(last 100 lines)</small></h3>
                     <div class="form-group">
                         <textarea class="form-control input-sm" id="tbxLog" rows="15" readonly="readonly"></textarea>
                     </div>
@@ -98,106 +103,106 @@
                 getProgress();
             });
 
-            if (<%=this.AnalyticsIndexService.IsBusy.ToString().ToLower()%>)
-            {
+            if (<%=AnalyticsIndexService.IsBusy.ToString().ToLower()%>)
+                {
                 getProgress();
-        }
-
-        });
-
-        function updateStats() {
-            var url = window.location.href + getJoiner() + "task=GetFacets";
-
-            $.getJSON(url, function( data ) {
-                var facets = data.Facets;
-                for (var i = 0; i < facets.length; i++) {
-                    var facet = facets[i];
-                    var facetEl = $("body").find("tr[data-facet-type='" + facet.Type + "']");
-                    facetEl.find(".facet-name").text(facet.Type);
-                    facetEl.find(".facet-count").text(facet.Count);
-                }
-            });
-        }
-
-        function getProgress() {
-            var url = window.location.href + getJoiner() + "task=GetLogProgress";
-            $.get(url, function (data) {
-                var json = JSON.parse(data);
-                var log = $("#tbxLog");
-                var complete = false;
-                var messages = "";
-                for (var i = 0; i < json.length; i++) {
-                    if (json[i] === "##Completed##") {
-                        complete = true;
-                    } else {
-                        messages += json[i] + "\n";
-                    }
-                }
-            
-                appendAndScroll(log, messages);
-
-                updateStats();
-
-                if (!complete) {
-                    disableAllButtons();
-                    setTimeout(function () { getProgress() }, 1000);
-                }
-                else {
-                    enableAllButtons();
-                }
-            });
-        }
-
-        function appendAndScroll(log, messages) {
-            var maxLines = 200;
-            log.append(messages);
-
-            setTimeout(function() {
-                log.animate({
-                        scrollTop: log[0].scrollHeight - log.height()
-                    },
-                    300,
-                    function() {
-                        setTimeout(function() {
-                            var lines = log.text().split("\n");
-                            if (lines.length > maxLines) {
-                                var newLines = [];
-                                var start = lines.length - maxLines - 1;
-                                for (var i = start; i < lines.length; i++) {
-                                    newLines.push(lines[i]);
-                                }
-
-                                log.text(newLines.join("\n"));
-                            }
-                        }, 100);
-                    });
-            }, 100);
-        }
-
-        function rebuildAll() {
-            var url = window.location.href + getJoiner() + "task=RebuildAll";
-            $.get(url, function (data) {});
-        }
-
-        function disableAllButtons(button) {
-            var facetEl = $(button).parent().parent();
-            facetEl.find(".action-status").html("<strong>In progress...</strong>");
-            $(".btn-active").attr("disabled", "disabled");
-        }
-
-        function enableAllButtons() {
-            $("body").find(".action-status").html("");
-            $(".btn-active").removeAttr("disabled");
-        }
-
-        function getJoiner() {
-            var joiner = "?";
-            if (window.location.href.indexOf("?") > -1) {
-                joiner = "&";
             }
 
-            return joiner;
-        }
+            });
+
+            function updateStats() {
+                var url = window.location.href + getJoiner() + "task=GetFacets";
+
+                $.getJSON(url, function( data ) {
+                    var facets = data.Facets;
+                    for (var i = 0; i < facets.length; i++) {
+                        var facet = facets[i];
+                        var facetEl = $("body").find("tr[data-facet-type='" + facet.Type + "']");
+                        facetEl.find(".facet-name").text(facet.Type);
+                        facetEl.find(".facet-count").text(facet.Count);
+                    }
+                });
+            }
+
+            function getProgress() {
+                var url = window.location.href + getJoiner() + "task=GetLogProgress";
+                $.get(url, function (data) {
+                    var json = JSON.parse(data);
+                    var log = $("#tbxLog");
+                    var complete = false;
+                    var messages = "";
+                    for (var i = 0; i < json.length; i++) {
+                        if (json[i] === "<%=ProcessQueueLoggingProvider.CompletedKeyword%>") {
+                            complete = true;
+                        } else {
+                            messages += json[i] + "\n";
+                        }
+                    }
+            
+                    appendAndScroll(log, messages);
+
+                    updateStats();
+
+                    if (!complete) {
+                        disableAllButtons();
+                        setTimeout(function () { getProgress() }, 1000);
+                    }
+                    else {
+                        enableAllButtons();
+                    }
+                });
+            }
+
+            function appendAndScroll(log, messages) {
+                var maxLines = 100;
+                log.append(messages);
+
+                // append messages, wait 200 ms, animate scrolling 300 ms, wait 200ms and trim log
+
+                setTimeout(function() {
+                    log.animate({
+                        scrollTop: log[0].scrollHeight - log.height()
+                    }, 500);
+                }, 100);
+
+                setTimeout(function() {
+                    var lines = log.text().split("\n");
+                    if (lines.length > maxLines) {
+                        var newLines = [];
+                        var start = lines.length - maxLines - 1;
+                        for (var i = start; i < lines.length; i++) {
+                            newLines.push(lines[i]);
+                        }
+
+                        log.text(newLines.join("\n"));
+                    }
+                }, 300);
+            }
+
+            function rebuildAll() {
+                var url = window.location.href + getJoiner() + "task=RebuildAll";
+                $.get(url, function (data) {});
+            }
+
+            function disableAllButtons(button) {
+                var facetEl = $(button).parent().parent();
+                facetEl.find(".action-status").html("<strong>In progress...</strong>");
+                $(".btn-active").attr("disabled", "disabled");
+            }
+
+            function enableAllButtons() {
+                $("body").find(".action-status").html("");
+                $(".btn-active").removeAttr("disabled");
+            }
+
+            function getJoiner() {
+                var joiner = "?";
+                if (window.location.href.indexOf("?") > -1) {
+                    joiner = "&";
+                }
+
+                return joiner;
+            }
 
     </script>
 </body>
