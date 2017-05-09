@@ -6,7 +6,7 @@
     using System.Web.Script.Serialization;
 
     using Sitecore.sitecore.admin;
-    using Helpfulcore.Logging;
+    using Logging;
 
     using ContentSearch;
 
@@ -21,6 +21,23 @@
          
         public AnalyticsIndexBuilderPage()
         {
+            var pageLogger = (ILoggingService)Factory.CreateObject("helpfulcore/analytics.index.builder/logging/pageLoggingService", true);
+            this.AnalyticsSearchService = (IAnalyticsSearchService)Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsSearchService", true);
+            this.LogQueue = (ProcessQueueLoggingProvider)Factory.CreateObject("helpfulcore/analytics.index.builder/logging/providers/indexingQueueLog", true);
+
+            if (AnalyticsIndexBuilder == null)
+            {
+                lock (InitializationSyncRoot)
+                {
+                    if (AnalyticsIndexBuilder == null)
+                    {
+                        // need to create specific static instance so it uses page logger.
+                        AnalyticsIndexBuilder = (IAnalyticsIndexBuilder)Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsIndexBuilder", true);
+                        AnalyticsIndexBuilder.ChangeLogger(pageLogger);
+                    }
+                }
+            }
+
             this.AnalyticsIndexFacets = new AnalyticsEntryFacetResult();
         }
 
@@ -28,7 +45,6 @@
         {
             base.OnLoad(e);
             this.CheckSecurity();
-            this.Initialize();
 
             var task = this.Request.QueryString["task"];
 
@@ -64,32 +80,21 @@
                     });
                 }
 
+                if (task == "RebuildContactTags")
+                {
+                    ThreadPool.QueueUserWorkItem(i =>
+                    {
+                        AnalyticsIndexBuilder.RebuildContactTagEntriesIndex();
+                        this.LogQueue.EndLogging();
+                    });
+                }
+
                 this.Response.End();
 
                 return;
             }
 
             this.AnalyticsIndexFacets = this.AnalyticsSearchService.GetAnalyticsIndexFacets();
-        }
-
-        private void Initialize()
-        {
-            var pageLogger = (ILoggingService)Factory.CreateObject("helpfulcore/analytics.index.builder/logging/pageLoggingService", true);
-            this.AnalyticsSearchService = (IAnalyticsSearchService)Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsSearchService", true);
-            this.LogQueue = (ProcessQueueLoggingProvider)Factory.CreateObject("helpfulcore/analytics.index.builder/logging/providers/indexingQueueLog", true);
-
-            if (AnalyticsIndexBuilder == null)
-            {
-                lock (InitializationSyncRoot)
-                {
-                    if (AnalyticsIndexBuilder == null)
-                    {
-                        // need to create specific static instance so it uses page logger.
-                        AnalyticsIndexBuilder = (IAnalyticsIndexBuilder)Factory.CreateObject("helpfulcore/analytics.index.builder/analyticsIndexBuilder", true);
-                        AnalyticsIndexBuilder.ChangeLogger(pageLogger);
-                    }
-                }
-            }
         }
 
         private void GetFacets()

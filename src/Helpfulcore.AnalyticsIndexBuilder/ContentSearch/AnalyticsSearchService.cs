@@ -35,28 +35,28 @@
             }
         }
 
-        public virtual IEnumerable<IndexedContact> GetIndexedContacts(IEnumerable<Guid> contactIds = null)
-        {
-            if (contactIds == null)
-            {
-                contactIds = new List<Guid>();
-            }
+        //public virtual IEnumerable<IndexedContact> GetIndexedContacts(IEnumerable<Guid> contactIds = null)
+        //{
+        //    if (contactIds == null)
+        //    {
+        //        contactIds = new List<Guid>();
+        //    }
 
-            var contactsIdsDictionary = contactIds.Distinct().ToDictionary(k => k, v => v);
+        //    var contactsIdsDictionary = contactIds.Distinct().ToDictionary(k => k, v => v);
 
-            using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateSearchContext())
-            {
-                // this includes filter for type:contact
-                var allContacts = context.GetQueryable<IndexedContact>().ToList();
+        //    using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateSearchContext())
+        //    {
+        //        // this includes filter for type:contact
+        //        var allContacts = context.GetQueryable<IndexedContact>().ToList();
 
-                if (contactsIdsDictionary.Any())
-                {
-                    return allContacts.Where(contact => contactsIdsDictionary.ContainsKey(contact.ContactId)).ToList();
-                }
+        //        if (contactsIdsDictionary.Any())
+        //        {
+        //            return allContacts.Where(contact => contactsIdsDictionary.ContainsKey(contact.ContactId)).ToList();
+        //        }
 
-                return allContacts;
-            }
-        }
+        //        return allContacts;
+        //    }
+        //}
 
         public virtual void UpdateIndexables(IEnumerable<AbstractIndexable> indexablesToUpdate)
         {
@@ -80,23 +80,23 @@
             });
         }
 
-        public virtual void RemoveContactsFromIndex(IEnumerable<AbstractIndexable> contacts)
-        {
-            var indexables = contacts as ICollection<AbstractIndexable> ?? contacts.ToList();
+        //public virtual void RemoveContactsFromIndex(IEnumerable<AbstractIndexable> contacts)
+        //{
+        //    var indexables = contacts as ICollection<AbstractIndexable> ?? contacts.ToList();
 
-            this.SafeExecution($"Removing {indexables.Count} indexed contacts from", () =>
-            {
-                using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateDeleteContext())
-                {
-                    foreach (var contact in indexables)
-                    {
-                        context.Delete(contact.UniqueId);
-                    }
+        //    this.SafeExecution($"Removing {indexables.Count} indexed contacts from", () =>
+        //    {
+        //        using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateDeleteContext())
+        //        {
+        //            foreach (var contact in indexables)
+        //            {
+        //                context.Delete(contact.UniqueId);
+        //            }
 
-                    context.Commit();
-                }
-            });
-        }
+        //            context.Commit();
+        //        }
+        //    });
+        //}
 
         protected virtual Dictionary<string, object> BuildIndexableDocument(IIndexable indexable, IProviderUpdateContext context)
         {

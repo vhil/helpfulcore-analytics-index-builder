@@ -12,7 +12,16 @@
 
         public AnalyticsEntryFacetResult()
         {
-            this.Facets = new List<AnalyticsEntryFacet>();
+            this.Facets = new List<AnalyticsEntryFacet>
+            {
+                new AnalyticsEntryFacet("contact", 0, true),
+                new AnalyticsEntryFacet("address", 0, true),
+                new AnalyticsEntryFacet("contactTag", 0, true),
+                new AnalyticsEntryFacet("visit", 0),
+                new AnalyticsEntryFacet("visitPage", 0),
+                new AnalyticsEntryFacet("visitPageEvent", 0)
+            };
+
         }
 
         public AnalyticsEntryFacetResult(FacetResults facetResults)
@@ -27,7 +36,17 @@
 
                 foreach (var facet in facets.OrderByDescending(c => c.ActionsAvailable).ThenBy(c => c.Type))
                 {
-                    this.Facets.Add(facet);
+                    var existingFacet = this.Facets.FirstOrDefault(x => 
+                        x.Type.Equals(facet.Type, StringComparison.CurrentCultureIgnoreCase));
+
+                    if (existingFacet != null)
+                    {
+                        existingFacet.Count = facet.Count;
+                    }
+                    else
+                    {
+                        this.Facets.Add(facet);
+                    }
                 }
             }
         }

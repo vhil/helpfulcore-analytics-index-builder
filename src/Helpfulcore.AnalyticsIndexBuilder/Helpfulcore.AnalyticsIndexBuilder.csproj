@@ -118,6 +118,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Batches\ContactTagIndexUpdater.cs" />
     <Compile Include="ContactSelection\AbstractContactSelectorProvider.cs" />
     <Compile Include="ContactSelection\IContactSelectionFilter.cs" />
     <Compile Include="ContactSelection\KnownContactsFilter.cs" />
@@ -131,7 +132,7 @@
     <Compile Include="ContactSelection\IContactsSelectorProvider.cs" />
     <Compile Include="ContactSelection\ContactIdentifiers.cs" />
     <Compile Include="ContactSelection\ContactIdentifiersData.cs" />
-    <Compile Include="Logging\ILoggerChangeable.cs" />
+    <Compile Include="ILoggerChangeable.cs" />
     <Compile Include="MongoDb\MongoDbContactSelectorProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="sitecore\admin\AnalyticsIndexBuilder.aspx.cs">
@@ -141,6 +142,9 @@
     <Compile Include="sitecore\admin\AnalyticsIndexBuilder.aspx.designer.cs">
       <DependentUpon>AnalyticsIndexBuilder.aspx.cs</DependentUpon>
     </Compile>
+    <Compile Include="Batches\AddressIndexUpdater.cs" />
+    <Compile Include="Batches\BatchedEntryIndexUpdater.cs" />
+    <Compile Include="Batches\ContactIndexUpdater.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

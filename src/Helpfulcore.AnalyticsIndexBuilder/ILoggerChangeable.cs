@@ -1,7 +1,7 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder.Logging
-{
-    using Helpfulcore.Logging;
+﻿using Helpfulcore.Logging;
 
+namespace Helpfulcore.AnalyticsIndexBuilder
+{
     public interface ILoggerChangeable
     {
         void ChangeLogger(ILoggingService logger);

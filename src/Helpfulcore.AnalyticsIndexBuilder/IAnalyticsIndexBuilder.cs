@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using Logging;
 
     public interface IAnalyticsIndexBuilder : ILoggerChangeable
     {
@@ -13,6 +12,9 @@
 
         void RebuildAddressEntriesIndex();
         void RebuildAddressEntriesIndex(IEnumerable<Guid> contactIds);
+
+        void RebuildContactTagEntriesIndex();
+        void RebuildContactTagEntriesIndex(IEnumerable<Guid> contactIds);
 
         [Obsolete("Not implemented at the moment.", true)]
         void RebuildVisitEntriesIndex();

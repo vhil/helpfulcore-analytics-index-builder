@@ -107,6 +107,12 @@
                 getProgress();
             });
 
+            $(".btn-rebuild-contactTag").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildContactTags();
+                getProgress();
+            });
+
             if (<%=AnalyticsIndexBuilder.IsBusy.ToString().ToLower()%>)
                 {
                 getProgress();
@@ -188,6 +194,11 @@
 
             function rebuildAddresses() {
                 var url = window.location.href + getJoiner() + "task=RebuildAddresses";
+                $.get(url, function (data) {});
+            }
+
+            function rebuildContactTags() {
+                var url = window.location.href + getJoiner() + "task=RebuildContactTags";
                 $.get(url, function (data) {});
             }
 

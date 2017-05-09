@@ -1,20 +1,16 @@
 ﻿namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
 {
-    using System;
-
     public class AnalyticsEntryFacet
     {
-        public AnalyticsEntryFacet(string type, int count)
+        public AnalyticsEntryFacet(string type, int count, bool actionsAvailable = false)
         {
             this.Type = type;
             this.Count = count;
-            this.ActionsAvailable = 
-                type.Equals("contact", StringComparison.CurrentCultureIgnoreCase)
-                || type.Equals("address", StringComparison.CurrentCultureIgnoreCase);
+            this.ActionsAvailable = actionsAvailable;
         }
 
         public string Type { get; protected set; }
-        public int Count { get; protected set; }
+        public int Count { get; set; }
         public bool ActionsAvailable { get; protected set; }
     }
 }

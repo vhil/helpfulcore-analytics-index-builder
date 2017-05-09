@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using Logging;
 
     /// <summary>
     /// Abstraction for retrieving contact ids from collection database to re-index.
