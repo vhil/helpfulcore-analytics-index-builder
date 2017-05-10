@@ -12,6 +12,8 @@
         /// Retrieves contact ids to re-index.
         /// </summary>
         /// <returns></returns>
-        IEnumerable<Guid> GetContactIdsToReindex();
+        IEnumerable<Guid> GetFilteredContactIdsToReindex();
+
+        IEnumerable<Guid> GetAllContactIdsToReindex();
     }
 }

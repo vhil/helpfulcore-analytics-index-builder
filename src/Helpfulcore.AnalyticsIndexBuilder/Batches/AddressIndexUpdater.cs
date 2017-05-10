@@ -10,10 +10,11 @@
     using Sitecore.ContentSearch.Analytics.Models;
     using Sitecore.Data;
 
+    using Collections;
     using Logging;
     using ContentSearch;
 
-    public class AddressIndexUpdater : BatchedEntryIndexUpdater<Tuple<string, Guid, IAddress>, AddressIndexable>
+    public class AddressIndexUpdater : BatchedEntryIndexUpdater<Tuple<string, Guid, IAddress>, IContact, AddressIndexable>
     {
         public AddressIndexUpdater(
             IAnalyticsSearchService analyticsSearchService, 
@@ -23,20 +24,21 @@
         {
         }
 
-        protected override ICollection<Tuple<string, Guid, IAddress>> GetAllSourceEntries(ICollection<Guid> contactIds)
+        public override IEnumerable<Tuple<string, Guid, IAddress>> LoadSourceEntries(IEnumerable<IContact> sourses)
         {
-            var sourceEntries = new List<Tuple<string, Guid, IAddress>>();
+            return sourses.SelectMany(this.LoadSourceEntries);
+        }
 
-            this.Logger.Info($"Loading contact addresses for {contactIds.Count} contacts...", this);
+        public override IEnumerable<Tuple<string, Guid, IAddress>> LoadSourceEntries(IContact sourse)
+        {
+            return this.GetContactAddresses(sourse).Select(address => new Tuple<string, Guid, IAddress>(address.Key, sourse.Id.Guid, address.Value));
+        }
 
-            foreach (var contactId in contactIds)
-            {
-                var contact = DataAdapterManager.Provider.LoadContactReadOnly(new ID(contactId), this.ContactFactory);
-                var addresses = this.GetContactAddresses(contact);
-                sourceEntries.AddRange(addresses.Select(address => new Tuple<string, Guid, IAddress>(address.Key, contactId, address.Value)));
-            }
-
-            return sourceEntries;
+        public override IEnumerable<Tuple<string, Guid, IAddress>> GetAllSourceEntries(IEnumerable<Guid> contactIds)
+        {
+            return new ConcurrentLazyContactIterator(contactIds
+                    .Select(contactId => DataAdapterManager.Provider.LoadContactReadOnly(new ID(contactId), this.ContactFactory)))
+                .SelectMany(this.LoadSourceEntries);
         }
 
         protected override AddressIndexable ConstructIndexable(Tuple<string, Guid, IAddress> source)

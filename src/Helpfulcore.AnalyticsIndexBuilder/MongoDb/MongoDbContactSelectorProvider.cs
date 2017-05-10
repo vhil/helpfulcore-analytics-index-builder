@@ -1,11 +1,12 @@
 ﻿namespace Helpfulcore.AnalyticsIndexBuilder.MongoDb
 {
     using System;
+    using System.Linq;
     using System.Collections.Generic;
     using Sitecore.Analytics.Data.DataAccess.MongoDb;
 
     using ContactSelection;
-    using Helpfulcore.Logging;
+    using Logging;
 
     public class MongoDbContactSelectorProvider : AbstractContactSelectorProvider
     {
@@ -24,6 +25,11 @@
 
             var driver = MongoDbDriver.FromConnectionString(this.AnalyticsMongoConnectionString);
             return driver.Contacts.FindAllAs<ContactIdentifiersData>();
+        }
+
+        public override IEnumerable<Guid> GetAllContactIdsToReindex()
+        {
+            return this.GetContactIds().Select(x => x._id);
         }
     }
 }

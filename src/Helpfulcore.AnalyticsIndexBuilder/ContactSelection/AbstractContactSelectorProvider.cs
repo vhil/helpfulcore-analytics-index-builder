@@ -7,7 +7,7 @@
 
     using Sitecore.Exceptions;
     
-    using Helpfulcore.Logging;
+    using Logging;
 
     public abstract class AbstractContactSelectorProvider : IContactsSelectorProvider
     {
@@ -22,7 +22,7 @@
             this.Filters = new ArrayList();
         }
 
-        public virtual IEnumerable<Guid> GetContactIdsToReindex()
+        public virtual IEnumerable<Guid> GetFilteredContactIdsToReindex()
         {
             return this.SafeExecution($"getting contact ids to re-index", () =>
             {
@@ -78,5 +78,6 @@
         }
 
         protected abstract IEnumerable<ContactIdentifiersData> GetContactIds();
+        public abstract IEnumerable<Guid> GetAllContactIdsToReindex();
     }
 }

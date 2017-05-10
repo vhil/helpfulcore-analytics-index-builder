@@ -8,11 +8,12 @@
     using Sitecore.Analytics.Model.Entities;
     using Sitecore.ContentSearch.Analytics.Models;
     using Sitecore.Data;
+    using Collections;
 
     using ContentSearch;
     using Logging;
 
-    public class ContactIndexUpdater : BatchedEntryIndexUpdater<IContact, ContactIndexable>
+    public class ContactIndexUpdater : BatchedEntryIndexUpdater<IContact, IContact, ContactIndexable>
     {
         public ContactIndexUpdater(
                 IAnalyticsSearchService analyticsSearchService, 
@@ -23,11 +24,20 @@
         {
         }
 
-        protected override ICollection<IContact> GetAllSourceEntries(ICollection<Guid> contactIds)
+        public override IEnumerable<IContact> LoadSourceEntries(IEnumerable<IContact> sources)
         {
-            return contactIds
-                .Select(id => DataAdapterManager.Provider.LoadContactReadOnly(new ID(id), this.ContactFactory))
-                .ToList();
+            return sources;
+        }
+
+        public override IEnumerable<IContact> LoadSourceEntries(IContact source)
+        {
+            yield return source;
+        }
+
+        public override IEnumerable<IContact> GetAllSourceEntries(IEnumerable<Guid> contactIds)
+        {
+            return new ConcurrentLazyContactIterator(contactIds
+                .Select(id => DataAdapterManager.Provider.LoadContactReadOnly(new ID(id), this.ContactFactory)));
         }
 
         protected override ContactIndexable ConstructIndexable(IContact source)

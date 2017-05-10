@@ -119,6 +119,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Batches\ContactTagIndexUpdater.cs" />
+    <Compile Include="Collections\ConcurrentLazyContactIterator.cs" />
     <Compile Include="ContactSelection\AbstractContactSelectorProvider.cs" />
     <Compile Include="ContactSelection\IContactSelectionFilter.cs" />
     <Compile Include="ContactSelection\KnownContactsFilter.cs" />

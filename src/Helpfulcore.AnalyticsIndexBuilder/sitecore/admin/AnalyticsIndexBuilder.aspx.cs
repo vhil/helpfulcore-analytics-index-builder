@@ -62,11 +62,29 @@
                     this.GetFacets();
                 }
 
+                if (task == "RebuildAllKnown")
+                {
+                    ThreadPool.QueueUserWorkItem(i =>
+                    {
+                        AnalyticsIndexBuilder.RebuildAllEntriesIndexes(true);
+                        this.LogQueue.EndLogging();
+                    });
+                }
+
+                if (task == "RebuildAll")
+                {
+                    ThreadPool.QueueUserWorkItem(i =>
+                    {
+                        AnalyticsIndexBuilder.RebuildAllEntriesIndexes(false);
+                        this.LogQueue.EndLogging();
+                    });
+                }
+
                 if (task == "RebuildContacts")
                 {
                     ThreadPool.QueueUserWorkItem(i =>
                     {
-                        AnalyticsIndexBuilder.RebuildContactEntriesIndex();
+                        AnalyticsIndexBuilder.RebuildContactEntriesIndex(true);
                         this.LogQueue.EndLogging();
                     });
                 }
@@ -75,7 +93,7 @@
                 {
                     ThreadPool.QueueUserWorkItem(i =>
                     {
-                        AnalyticsIndexBuilder.RebuildAddressEntriesIndex();
+                        AnalyticsIndexBuilder.RebuildAddressEntriesIndex(true);
                         this.LogQueue.EndLogging();
                     });
                 }
@@ -84,7 +102,34 @@
                 {
                     ThreadPool.QueueUserWorkItem(i =>
                     {
-                        AnalyticsIndexBuilder.RebuildContactTagEntriesIndex();
+                        AnalyticsIndexBuilder.RebuildContactTagEntriesIndex(true);
+                        this.LogQueue.EndLogging();
+                    });
+                }
+
+                if (task == "RebuildContactsAll")
+                {
+                    ThreadPool.QueueUserWorkItem(i =>
+                    {
+                        AnalyticsIndexBuilder.RebuildContactEntriesIndex(false);
+                        this.LogQueue.EndLogging();
+                    });
+                }
+
+                if (task == "RebuildAddressesAll")
+                {
+                    ThreadPool.QueueUserWorkItem(i =>
+                    {
+                        AnalyticsIndexBuilder.RebuildAddressEntriesIndex(false);
+                        this.LogQueue.EndLogging();
+                    });
+                }
+
+                if (task == "RebuildContactTagsAll")
+                {
+                    ThreadPool.QueueUserWorkItem(i =>
+                    {
+                        AnalyticsIndexBuilder.RebuildContactTagEntriesIndex(false);
                         this.LogQueue.EndLogging();
                     });
                 }

@@ -41,10 +41,20 @@
             </div>
         </div>
     </div>
+     <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-md-9 text-right">
+                    <button type="button" class="btn btn-success btn-xs btn-active btn-rebuild-all-known">Rebuild all known indexables</button>
+                    <button type="button" class="btn btn-primary btn-xs btn-active btn-rebuild-all">Rebuild all indexables</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <div class="col-md-7">
+                <div class="col-md-9">
                     <h3>Analytics index overview</h3>
                     <div class="table-responsive">
                         <table class="table">
@@ -52,8 +62,10 @@
                                 <tr>
                                     <th>Indexable type</th>
                                     <th>Count of entries</th>
-                                    <th>Action</th>
+                                    <th>Actions</th>
+                                    <th width="0"></th>
                                     <th></th>
+                                    <th width="120"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -64,8 +76,15 @@
                                     <td class="facet-count"><%=facet.Count %></td>
                                     <td>
                                         <% if (facet.ActionsAvailable)
-                                            { %>
-                                        <button type="button" class="btn btn-success btn-xs btn-active btn-rebuild-<%=facet.Type%>">Rebuild <%=facet.Type%> indexables</button>
+                                        { %>
+                                        <button type="button" class="pull-right btn btn-success btn-xs btn-active btn-rebuild-<%=facet.Type%>">Rebuild known indexables of this type</button>
+                                        <%} %>
+                                    </td>
+                                    <td></td>
+                                     <td>
+                                        <% if (facet.ActionsAvailable)
+                                        { %>
+                                        <button type="button" class="pull-left btn btn-primary btn-xs btn-active btn-rebuild-all-<%=facet.Type%>">Rebuild all indexables of this type</button>
                                         <%} %>
                                     </td>
                                     <td class="action-status text-success"></td>
@@ -95,133 +114,176 @@
     <br />
     <script>
         $(function () {
+
+            $(".btn-rebuild-all").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildAll();
+                getProgress();
+            });
+
+            $(".btn-rebuild-all-known").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildAllKnown();
+                getProgress();
+            });
+
             $(".btn-rebuild-contact").on("click", function (e) {
                 disableAllButtons(this);
-                rebuildContacts();
+                rebuildContacts(false);
                 getProgress();
             });
 
             $(".btn-rebuild-address").on("click", function (e) {
                 disableAllButtons(this);
-                rebuildAddresses();
+                rebuildAddresses(false);
                 getProgress();
             });
 
             $(".btn-rebuild-contactTag").on("click", function (e) {
                 disableAllButtons(this);
-                rebuildContactTags();
+                rebuildContactTags(false);
+                getProgress();
+            });
+            
+            $(".btn-rebuild-all-contact").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildContacts(true);
+                getProgress();
+            });
+
+            $(".btn-rebuild-all-address").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildAddresses(true);
+                getProgress();
+            });
+
+            $(".btn-rebuild-all-contactTag").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildContactTags(true);
                 getProgress();
             });
 
             if (<%=AnalyticsIndexBuilder.IsBusy.ToString().ToLower()%>)
-                {
+            {
                 getProgress();
             }
 
+        });
+
+        function updateStats() {
+            var url = window.location.href + getJoiner() + "task=GetFacets";
+
+            $.getJSON(url, function( data ) {
+                var facets = data.Facets;
+                for (var i = 0; i < facets.length; i++) {
+                    var facet = facets[i];
+                    var facetEl = $("body").find("tr[data-facet-type='" + facet.Type + "']");
+                    facetEl.find(".facet-name").text(facet.Type);
+                    facetEl.find(".facet-count").text(facet.Count);
+                }
             });
+        }
 
-            function updateStats() {
-                var url = window.location.href + getJoiner() + "task=GetFacets";
-
-                $.getJSON(url, function( data ) {
-                    var facets = data.Facets;
-                    for (var i = 0; i < facets.length; i++) {
-                        var facet = facets[i];
-                        var facetEl = $("body").find("tr[data-facet-type='" + facet.Type + "']");
-                        facetEl.find(".facet-name").text(facet.Type);
-                        facetEl.find(".facet-count").text(facet.Count);
+        function getProgress() {
+            var url = window.location.href + getJoiner() + "task=GetLogProgress";
+            $.get(url, function (data) {
+                var json = JSON.parse(data);
+                var log = $("#tbxLog");
+                var complete = false;
+                var messages = "";
+                for (var i = 0; i < json.length; i++) {
+                    if (json[i] === "<%=ProcessQueueLoggingProvider.CompletedKeyword%>") {
+                        complete = true;
+                    } else {
+                        messages += json[i] + "\n";
                     }
-                });
-            }
-
-            function getProgress() {
-                var url = window.location.href + getJoiner() + "task=GetLogProgress";
-                $.get(url, function (data) {
-                    var json = JSON.parse(data);
-                    var log = $("#tbxLog");
-                    var complete = false;
-                    var messages = "";
-                    for (var i = 0; i < json.length; i++) {
-                        if (json[i] === "<%=ProcessQueueLoggingProvider.CompletedKeyword%>") {
-                            complete = true;
-                        } else {
-                            messages += json[i] + "\n";
-                        }
-                    }
+                }
             
-                    appendAndScroll(log, messages);
+                appendAndScroll(log, messages);
 
-                    updateStats();
+                updateStats();
 
-                    if (!complete) {
-                        disableAllButtons();
-                        setTimeout(function () { getProgress() }, 1000);
-                    }
-                    else {
-                        enableAllButtons();
-                    }
-                });
-            }
+                if (!complete) {
+                    disableAllButtons();
+                    setTimeout(function () { getProgress() }, 1000);
+                }
+                else {
+                    enableAllButtons();
+                }
+            });
+        }
 
-            function appendAndScroll(log, messages) {
-                var maxLines = 100;
-                log.append(messages);
+        function appendAndScroll(log, messages) {
+            var maxLines = 100;
+            log.append(messages);
 
+            setTimeout(function() {
+                log.animate({
+                    scrollTop: log[0].scrollHeight - log.height()
+                }, 500);
+            }, 100);
+
+            var lines = log.text().split("\n");
+            if (lines.length > maxLines) {
                 setTimeout(function() {
-                    log.animate({
-                        scrollTop: log[0].scrollHeight - log.height()
-                    }, 500);
-                }, 100);
+                    var newLines = [];
+                    var start = lines.length - maxLines - 1;
+                    for (var i = start; i < lines.length; i++) {
+                        newLines.push(lines[i]);
+                    }
 
-                var lines = log.text().split("\n");
-                if (lines.length > maxLines) {
-                    setTimeout(function() {
-                        var newLines = [];
-                        var start = lines.length - maxLines - 1;
-                        for (var i = start; i < lines.length; i++) {
-                            newLines.push(lines[i]);
-                        }
+                    log.text(newLines.join("\n"));
+                }, 300);
+            }
+        }
+            
+        function rebuildAllKnown() {
+            var url = window.location.href + getJoiner() + "task=RebuildAllKnown";
+            $.get(url, function (data) {});
+        }
 
-                        log.text(newLines.join("\n"));
-                    }, 300);
-                }
+        function rebuildAll() {
+            var url = window.location.href + getJoiner() + "task=RebuildAll";
+            $.get(url, function (data) {});
+        }
+
+        function rebuildContacts(all) {
+            var url = window.location.href + getJoiner() + "task=RebuildContacts";
+            if (all) {url += "All";}
+            $.get(url, function (data) {});
+        }
+
+        function rebuildAddresses(all) {
+            var url = window.location.href + getJoiner() + "task=RebuildAddresses";
+            if (all) {url += "All";}
+            $.get(url, function (data) {});
+        }
+
+        function rebuildContactTags(all) {
+            var url = window.location.href + getJoiner() + "task=RebuildContactTags";
+            if (all) {url += "All";}
+            $.get(url, function (data) {});
+        }
+
+        function disableAllButtons(button) {
+            var facetEl = $(button).parent().parent();
+            facetEl.find(".action-status").html("<strong>In progress...</strong>");
+            $(".btn-active").attr("disabled", "disabled");
+        }
+
+        function enableAllButtons() {
+            $("body").find(".action-status").html("");
+            $(".btn-active").removeAttr("disabled");
+        }
+
+        function getJoiner() {
+            var joiner = "?";
+            if (window.location.href.indexOf("?") > -1) {
+                joiner = "&";
             }
 
-            function rebuildContacts() {
-                var url = window.location.href + getJoiner() + "task=RebuildContacts";
-                $.get(url, function (data) {});
-            }
-
-            function rebuildAddresses() {
-                var url = window.location.href + getJoiner() + "task=RebuildAddresses";
-                $.get(url, function (data) {});
-            }
-
-            function rebuildContactTags() {
-                var url = window.location.href + getJoiner() + "task=RebuildContactTags";
-                $.get(url, function (data) {});
-            }
-
-            function disableAllButtons(button) {
-                var facetEl = $(button).parent().parent();
-                facetEl.find(".action-status").html("<strong>In progress...</strong>");
-                $(".btn-active").attr("disabled", "disabled");
-            }
-
-            function enableAllButtons() {
-                $("body").find(".action-status").html("");
-                $(".btn-active").removeAttr("disabled");
-            }
-
-            function getJoiner() {
-                var joiner = "?";
-                if (window.location.href.indexOf("?") > -1) {
-                    joiner = "&";
-                }
-
-                return joiner;
-            }
-
+            return joiner;
+        }
     </script>
 </body>
 </html>

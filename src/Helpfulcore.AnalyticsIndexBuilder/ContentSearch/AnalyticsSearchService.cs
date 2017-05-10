@@ -7,12 +7,11 @@
 
     using Sitecore.Configuration;
     using Sitecore.ContentSearch;
-    using Sitecore.ContentSearch.Analytics.Models;
     using Sitecore.ContentSearch.Linq;
     using Sitecore.Reflection;
 
     using Lucene.Net.Index;
-    using Helpfulcore.Logging;
+    using Logging;
 
     public class AnalyticsSearchService : IAnalyticsSearchService
     {
@@ -35,34 +34,11 @@
             }
         }
 
-        //public virtual IEnumerable<IndexedContact> GetIndexedContacts(IEnumerable<Guid> contactIds = null)
-        //{
-        //    if (contactIds == null)
-        //    {
-        //        contactIds = new List<Guid>();
-        //    }
-
-        //    var contactsIdsDictionary = contactIds.Distinct().ToDictionary(k => k, v => v);
-
-        //    using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateSearchContext())
-        //    {
-        //        // this includes filter for type:contact
-        //        var allContacts = context.GetQueryable<IndexedContact>().ToList();
-
-        //        if (contactsIdsDictionary.Any())
-        //        {
-        //            return allContacts.Where(contact => contactsIdsDictionary.ContainsKey(contact.ContactId)).ToList();
-        //        }
-
-        //        return allContacts;
-        //    }
-        //}
-
         public virtual void UpdateIndexables(IEnumerable<AbstractIndexable> indexablesToUpdate)
         {
             var indexables = indexablesToUpdate as ICollection<AbstractIndexable> ?? indexablesToUpdate.ToList();
 
-            this.SafeExecution($"Updating {indexables.Count} indexed contacts in", () =>
+            this.SafeExecution($"Updating {indexables.Count} indexables", () =>
             {
                 using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateUpdateContext())
                 {
@@ -79,24 +55,6 @@
                 }
             });
         }
-
-        //public virtual void RemoveContactsFromIndex(IEnumerable<AbstractIndexable> contacts)
-        //{
-        //    var indexables = contacts as ICollection<AbstractIndexable> ?? contacts.ToList();
-
-        //    this.SafeExecution($"Removing {indexables.Count} indexed contacts from", () =>
-        //    {
-        //        using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateDeleteContext())
-        //        {
-        //            foreach (var contact in indexables)
-        //            {
-        //                context.Delete(contact.UniqueId);
-        //            }
-
-        //            context.Commit();
-        //        }
-        //    });
-        //}
 
         protected virtual Dictionary<string, object> BuildIndexableDocument(IIndexable indexable, IProviderUpdateContext context)
         {
@@ -127,7 +85,7 @@
 
         protected virtual void SafeExecution(string actionDescription, Action action)
         {
-            this.Logger.Debug($"{actionDescription} '{this.AnalyticsIndexName}' content search index..", this);
+            this.Logger.Debug($"{actionDescription} in '{this.AnalyticsIndexName}' content search index..", this);
 
             try
             {

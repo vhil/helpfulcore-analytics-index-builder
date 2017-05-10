@@ -1,8 +1,12 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder
+﻿using System.Collections.Concurrent;
+using Sitecore.Analytics.Model.Entities;
+
+namespace Helpfulcore.AnalyticsIndexBuilder
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
 
     using ContactSelection;
     using ContentSearch;
@@ -51,28 +55,21 @@
 
         public virtual bool IsBusy { get; protected set; }
 
-        public virtual void RebuildContactEntriesIndex()
+        public virtual void RebuildContactEntriesIndex(bool applyFillters)
         {
-            var indexUpdater = new ContactIndexUpdater(
-                this.AnalyticsSearchService, 
-                this.Logger, 
-                this.BatchSize, 
-                this.ConcurrentThreads);
+            var indexUpdater = new ContactIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
 
             this.SafeExecution($"rebuilding {indexUpdater.IndexableType} entries index", () =>
             {
-                var contactIds = this.ContactSelector.GetContactIdsToReindex();
+                var contactIds = this.LoadContactIds(applyFillters);
+
                 indexUpdater.ProcessInBatches(contactIds);
             });
         }
 
         public virtual void RebuildContactEntriesIndex(IEnumerable<Guid> contactIds)
         {
-            var indexUpdater = new ContactIndexUpdater(
-                this.AnalyticsSearchService, 
-                this.Logger, 
-                this.BatchSize, 
-                this.ConcurrentThreads);
+            var indexUpdater = new ContactIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
 
             this.SafeExecution($"rebuilding {indexUpdater.IndexableType}  entries index for {contactIds.Count()} contacts", () =>
             {
@@ -80,28 +77,21 @@
             });
         }
 
-        public virtual void RebuildAddressEntriesIndex()
+        public virtual void RebuildAddressEntriesIndex(bool applyFillters)
         {
-            var indexUpdater = new AddressIndexUpdater(
-                this.AnalyticsSearchService,
-                this.Logger,
-                this.BatchSize,
-                this.ConcurrentThreads);
+            var indexUpdater = new AddressIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
 
             this.SafeExecution($"rebuilding {indexUpdater.IndexableType} entries index", () =>
             {
-                var contactIds = this.ContactSelector.GetContactIdsToReindex();
+                var contactIds = this.LoadContactIds(applyFillters);
+
                 indexUpdater.ProcessInBatches(contactIds);
             });
         }
 
         public virtual void RebuildAddressEntriesIndex(IEnumerable<Guid> contactIds)
         {
-            var indexUpdater = new AddressIndexUpdater(
-                this.AnalyticsSearchService,
-                this.Logger,
-                this.BatchSize,
-                this.ConcurrentThreads);
+            var indexUpdater = new AddressIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
 
             this.SafeExecution($"rebuilding {indexUpdater.IndexableType} entries index", () =>
             {
@@ -109,33 +99,55 @@
             });
         }
 
-        public virtual void RebuildContactTagEntriesIndex()
+        public virtual void RebuildContactTagEntriesIndex(bool applyFillters)
         {
-            var indexUpdater = new ContactTagIndexUpdater(
-                this.AnalyticsSearchService,
-                this.Logger,
-                this.BatchSize,
-                this.ConcurrentThreads);
+            var indexUpdater = new ContactTagIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
 
             this.SafeExecution($"rebuilding {indexUpdater.IndexableType} entries index", () =>
             {
-                var contactIds = this.ContactSelector.GetContactIdsToReindex();
+                var contactIds = this.LoadContactIds(applyFillters);
+
                 indexUpdater.ProcessInBatches(contactIds);
             });
         }
 
         public virtual void RebuildContactTagEntriesIndex(IEnumerable<Guid> contactIds)
         {
-            var indexUpdater = new ContactTagIndexUpdater(
-                this.AnalyticsSearchService,
-                this.Logger,
-                this.BatchSize,
-                this.ConcurrentThreads);
+            var indexUpdater = new ContactTagIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
 
             this.SafeExecution($"rebuilding {indexUpdater.IndexableType} entries index", () =>
             {
                 indexUpdater.ProcessInBatches(contactIds);
             });
+        }
+
+        public void RebuildAllEntriesIndexes(bool applyFillters)
+        {
+            this.SafeExecution($"rebuilding all known entries indexes", () =>
+            {
+                var contactIds = this.LoadContactIds(applyFillters);
+
+                this.RebuildAll(contactIds);
+            });
+        }
+
+        protected virtual void RebuildAll(IEnumerable<Guid> contactIds)
+        {
+            var contactIndexUpdater = new ContactIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
+            var addressIndexUpdater = new AddressIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
+            var contactTagIndexUpdater = new ContactTagIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
+
+            var contacts = contactIndexUpdater.GetAllSourceEntries(contactIds);
+
+            var updateTasks = new Action[]
+            {
+                () => { addressIndexUpdater.ProcessInBatches(contacts); },
+                () => { contactIndexUpdater.ProcessInBatches(contacts); },
+                () => { contactTagIndexUpdater.ProcessInBatches(contacts); }
+            };
+
+            var options = new ParallelOptions {MaxDegreeOfParallelism = updateTasks.Length };
+            Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
         }
 
         #region to implement
@@ -168,6 +180,17 @@
         }
 
         #endregion
+
+        #region help
+
+        protected virtual IEnumerable<Guid> LoadContactIds(bool applyFillters)
+        {
+            var contactIds = applyFillters
+                ? this.ContactSelector.GetFilteredContactIdsToReindex()
+                : this.ContactSelector.GetAllContactIdsToReindex();
+
+            return contactIds;
+        }
 
         protected virtual void SafeExecution(string actionDescription, Action action)
         {
@@ -204,5 +227,7 @@
                 this.ContactSelector.ChangeLogger(logger);
             }
         }
+
+        #endregion
     }
 }

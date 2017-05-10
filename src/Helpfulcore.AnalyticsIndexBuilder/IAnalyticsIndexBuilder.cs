@@ -7,14 +7,15 @@
     {
         bool IsBusy { get; }
 
-        void RebuildContactEntriesIndex();
+        void RebuildContactEntriesIndex(bool applyFilters);
         void RebuildContactEntriesIndex(IEnumerable<Guid> contactIds);
 
-        void RebuildAddressEntriesIndex();
+        void RebuildAddressEntriesIndex(bool applyFilters);
         void RebuildAddressEntriesIndex(IEnumerable<Guid> contactIds);
 
-        void RebuildContactTagEntriesIndex();
+        void RebuildContactTagEntriesIndex(bool applyFilters);
         void RebuildContactTagEntriesIndex(IEnumerable<Guid> contactIds);
+        void RebuildAllEntriesIndexes(bool applyFilters);
 
         [Obsolete("Not implemented at the moment.", true)]
         void RebuildVisitEntriesIndex();
@@ -24,5 +25,6 @@
 
         [Obsolete("Not implemented at the moment.", true)]
         void RebuildVisitPageEventEntriesIndex();
+
     }
 }

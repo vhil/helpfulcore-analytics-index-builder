@@ -9,10 +9,11 @@
     using Sitecore.ContentSearch.Analytics.Models;
     using Sitecore.Data;
 
+    using Collections;
     using ContentSearch;
     using Logging;
 
-    public class ContactTagIndexUpdater : BatchedEntryIndexUpdater<Tuple<string, ITag, Guid>, ContactTagIndexable>
+    public class ContactTagIndexUpdater : BatchedEntryIndexUpdater<Tuple<string, ITag, Guid>, IContact, ContactTagIndexable>
     {
         public ContactTagIndexUpdater(
                 IAnalyticsSearchService analyticsSearchService, 
@@ -23,15 +24,23 @@
         {
         }
 
-        protected override ICollection<Tuple<string, ITag, Guid>> GetAllSourceEntries(ICollection<Guid> contactIds)
+        public override IEnumerable<Tuple<string, ITag, Guid>> LoadSourceEntries(IEnumerable<IContact> sources)
         {
-            var contacts = contactIds
-                .Select(id => DataAdapterManager.Provider.LoadContactReadOnly(new ID(id), this.ContactFactory));
+            return sources.SelectMany(this.LoadSourceEntries);
+        }
 
-            return contacts.SelectMany(c => c.Tags.Entries.Keys
-                .Where(tagKey => c.Tags.Entries[tagKey] != null)
-                .Select(tagKey => new Tuple<string, ITag, Guid>(tagKey, c.Tags.Entries[tagKey], c.Id.Guid)))
-                .ToList();
+        public override IEnumerable<Tuple<string, ITag, Guid>> LoadSourceEntries(IContact source)
+        {
+            return source.Tags.Entries.Keys
+                .Where(tagKey => source.Tags.Entries[tagKey] != null)
+                .Select(tagKey => new Tuple<string, ITag, Guid>(tagKey, source.Tags.Entries[tagKey], source.Id.Guid));
+        }
+
+        public override IEnumerable<Tuple<string, ITag, Guid>> GetAllSourceEntries(IEnumerable<Guid> contactIds)
+        {
+            return new ConcurrentLazyContactIterator(contactIds
+                    .Select(id => DataAdapterManager.Provider.LoadContactReadOnly(new ID(id), this.ContactFactory)))
+                .SelectMany(this.LoadSourceEntries);
         }
 
         protected override ContactTagIndexable ConstructIndexable(Tuple<string, ITag, Guid> source)
