@@ -4,13 +4,10 @@
     using System.Collections.Generic;
     using System.Linq;
 
-    using Sitecore.Analytics.Data.DataAccess;
     using Sitecore.Analytics.Model.Entities;
     using Sitecore.Analytics.Model.Framework;
     using Sitecore.ContentSearch.Analytics.Models;
-    using Sitecore.Data;
 
-    using Collections;
     using Logging;
     using ContentSearch;
 
@@ -22,23 +19,6 @@
             int batchSize, 
             int concurrentThreads) : base("type:address", analyticsSearchService, logger, batchSize, concurrentThreads)
         {
-        }
-
-        public override IEnumerable<Tuple<string, Guid, IAddress>> LoadSourceEntries(IEnumerable<IContact> sourses)
-        {
-            return sourses.SelectMany(this.LoadSourceEntries);
-        }
-
-        public override IEnumerable<Tuple<string, Guid, IAddress>> LoadSourceEntries(IContact sourse)
-        {
-            return this.GetContactAddresses(sourse).Select(address => new Tuple<string, Guid, IAddress>(address.Key, sourse.Id.Guid, address.Value));
-        }
-
-        public override IEnumerable<Tuple<string, Guid, IAddress>> GetAllSourceEntries(IEnumerable<Guid> contactIds)
-        {
-            return new ConcurrentLazyContactIterator(contactIds
-                    .Select(contactId => DataAdapterManager.Provider.LoadContactReadOnly(new ID(contactId), this.ContactFactory)))
-                .SelectMany(this.LoadSourceEntries);
         }
 
         protected override AddressIndexable ConstructIndexable(Tuple<string, Guid, IAddress> source)
@@ -61,6 +41,17 @@
             }
 
             return dictionary;
+        }
+
+        protected override IEnumerable<Tuple<string, Guid, IAddress>> LoadSourceEntries(IEnumerable<IContact> sourses)
+        {
+            return sourses.SelectMany(this.LoadSourceEntries);
+        }
+
+        private IEnumerable<Tuple<string, Guid, IAddress>> LoadSourceEntries(IContact sourse)
+        {
+            return this.GetContactAddresses(sourse).Select(address => 
+                new Tuple<string, Guid, IAddress>(address.Key, sourse.Id.Guid, address.Value));
         }
     }
 }

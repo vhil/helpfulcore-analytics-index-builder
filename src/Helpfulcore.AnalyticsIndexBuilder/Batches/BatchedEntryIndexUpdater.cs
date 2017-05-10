@@ -13,14 +13,16 @@
     using ContentSearch;
     using Logging;
 
-    public abstract class BatchedEntryIndexUpdater<TSourceEntry, TParentObject, TIndexable> where TIndexable : AbstractIndexable
+    public abstract class BatchedEntryIndexUpdater<TSourceEntry, TParentObject, TIndexable> : IBatchedEntryIndexUpdater
+        where TIndexable : AbstractIndexable
     {
-        public readonly string IndexableType;
         protected readonly IAnalyticsSearchService AnalyticsSearchService;
         protected readonly IContactFactory ContactFactory;
-        protected readonly ILoggingService Logger;
+        protected ILoggingService Logger;
         protected readonly int BatchSize;
         protected readonly int ConcurrentThreads;
+
+        public string IndexableType { get; private set; }
 
         protected BatchedEntryIndexUpdater(
             string indexableType,
@@ -37,19 +39,17 @@
             this.ContactFactory = Factory.CreateObject("model/entities/contact/factory", true) as IContactFactory;
         }
         
-        public void ProcessInBatches(IEnumerable<Guid> contactIds)
-        {
-            var contacts = contactIds?.Distinct().ToArray() ?? new Guid[0];
-            this.ProcessInBatches(this.GetAllSourceEntries(contacts));
-        }
-
         public void ProcessInBatches(IEnumerable<object> parentObjects)
         {
+            if (parentObjects == null) throw new ArgumentNullException(nameof(parentObjects));
+
             this.ProcessInBatches(this.LoadSourceEntries(parentObjects as IEnumerable<TParentObject>));
         }
 
         public void ProcessInBatches(IEnumerable<TSourceEntry> sourceEntries)
         {
+            if (sourceEntries == null) throw new ArgumentNullException(nameof(sourceEntries));
+
             long count = 0;
 
             var sourceList = new List<TSourceEntry>();
@@ -73,6 +73,8 @@
 
         protected virtual void SubmitBatch(ICollection<TSourceEntry> sourceEntries)
         {
+            if (sourceEntries == null) throw new ArgumentNullException(nameof(sourceEntries));
+
             try
             {
                 var indexables = this.LoadIndexablesFields(sourceEntries);
@@ -84,12 +86,14 @@
             }
             finally
             {
-                this.Logger.Info($"Batch of {this.IndexableType} {sourceEntries.Count} indexables rebuilt and submitted to index.", this);
+                this.Logger.Info($"Batch of {sourceEntries.Count} {this.IndexableType} indexables rebuilt and submitted to index.", this);
             }
         }
 
         protected virtual IEnumerable<TIndexable> LoadIndexablesFields(IEnumerable<TSourceEntry> sourceEntries)
         {
+            if (sourceEntries == null) throw new ArgumentNullException(nameof(sourceEntries));
+
             // loading  indexables could be a heavy operation 
             // so executing it in multiple threads for performance
             var indexables = new ConcurrentBag<TIndexable>();
@@ -106,9 +110,15 @@
             return indexables.ToArray();
         }
 
-        public abstract IEnumerable<TSourceEntry> LoadSourceEntries(IEnumerable<TParentObject> sources);
-        public abstract IEnumerable<TSourceEntry> LoadSourceEntries(TParentObject source);
-        public abstract IEnumerable<TSourceEntry> GetAllSourceEntries(IEnumerable<Guid> contactIds);
+        public void ChangeLogger(ILoggingService logger)
+        {
+            if (logger != null)
+            {
+                this.Logger = logger;
+            }
+        }
+
         protected abstract TIndexable ConstructIndexable(TSourceEntry source);
+        protected abstract IEnumerable<TSourceEntry> LoadSourceEntries(IEnumerable<TParentObject> sources);
     }
 }

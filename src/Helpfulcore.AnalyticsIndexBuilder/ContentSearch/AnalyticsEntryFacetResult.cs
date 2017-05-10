@@ -17,9 +17,9 @@
                 new AnalyticsEntryFacet("contact", 0, true),
                 new AnalyticsEntryFacet("address", 0, true),
                 new AnalyticsEntryFacet("contactTag", 0, true),
-                new AnalyticsEntryFacet("visit", 0),
-                new AnalyticsEntryFacet("visitPage", 0),
-                new AnalyticsEntryFacet("visitPageEvent", 0)
+                new AnalyticsEntryFacet("visit", 0, true),
+                new AnalyticsEntryFacet("visitPage", 0, true),
+                new AnalyticsEntryFacet("visitPageEvent", 0, true)
             };
 
         }

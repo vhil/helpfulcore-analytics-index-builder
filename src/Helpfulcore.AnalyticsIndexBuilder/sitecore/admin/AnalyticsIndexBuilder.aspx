@@ -45,7 +45,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="col-md-9 text-right">
-                    <button type="button" class="btn btn-success btn-xs btn-active btn-rebuild-all-known">Rebuild all known indexables</button>
+                    <button type="button" class="btn btn-success btn-xs btn-active btn-rebuild-all-known">Rebuild all filtered indexables</button>
                     <button type="button" class="btn btn-primary btn-xs btn-active btn-rebuild-all">Rebuild all indexables</button>
                 </div>
             </div>
@@ -77,7 +77,7 @@
                                     <td>
                                         <% if (facet.ActionsAvailable)
                                         { %>
-                                        <button type="button" class="pull-right btn btn-success btn-xs btn-active btn-rebuild-<%=facet.Type%>">Rebuild known indexables of this type</button>
+                                        <button type="button" class="pull-right btn btn-success btn-xs btn-active btn-rebuild-<%=facet.Type%>">Rebuild filtered indexables of this type</button>
                                         <%} %>
                                     </td>
                                     <td></td>
@@ -144,6 +144,24 @@
                 rebuildContactTags(false);
                 getProgress();
             });
+
+            $(".btn-rebuild-visit").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildVisits(false);
+                getProgress();
+            });
+
+            $(".btn-rebuild-visitPage").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildVisitPages(false);
+                getProgress();
+            });
+
+            $(".btn-rebuild-visitPageEvent").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildVisitPageEvents(false);
+                getProgress();
+            });
             
             $(".btn-rebuild-all-contact").on("click", function (e) {
                 disableAllButtons(this);
@@ -160,6 +178,24 @@
             $(".btn-rebuild-all-contactTag").on("click", function (e) {
                 disableAllButtons(this);
                 rebuildContactTags(true);
+                getProgress();
+            });
+
+            $(".btn-rebuild-all-visit").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildVisits(true);
+                getProgress();
+            });
+
+            $(".btn-rebuild-all-visitPage").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildVisitPages(true);
+                getProgress();
+            });
+
+            $(".btn-rebuild-all-visitPageEvent").on("click", function (e) {
+                disableAllButtons(this);
+                rebuildVisitPageEvents(true);
                 getProgress();
             });
 
@@ -261,6 +297,24 @@
 
         function rebuildContactTags(all) {
             var url = window.location.href + getJoiner() + "task=RebuildContactTags";
+            if (all) {url += "All";}
+            $.get(url, function (data) {});
+        }
+        
+        function rebuildVisits(all) {
+            var url = window.location.href + getJoiner() + "task=RebuildVisits";
+            if (all) {url += "All";}
+            $.get(url, function (data) {});
+        }
+
+        function rebuildVisitPages(all) {
+            var url = window.location.href + getJoiner() + "task=RebuildVisitPages";
+            if (all) {url += "All";}
+            $.get(url, function (data) {});
+        }
+
+        function rebuildVisitPageEvents(all) {
+            var url = window.location.href + getJoiner() + "task=RebuildVisitPageEvents";
             if (all) {url += "All";}
             $.get(url, function (data) {});
         }

@@ -52,94 +52,39 @@
             {
                 this.Response.Clear();
 
-                if (task == "GetLogProgress")
-                {
-                    this.GetLogProgress();
-                }
+                if (task == "GetLogProgress") this.GetLogProgress();
+                if (task == "GetFacets") this.GetFacets(); 
 
-                if (task == "GetFacets")
-                {
-                    this.GetFacets();
-                }
-
-                if (task == "RebuildAllKnown")
-                {
-                    ThreadPool.QueueUserWorkItem(i =>
-                    {
-                        AnalyticsIndexBuilder.RebuildAllEntriesIndexes(true);
-                        this.LogQueue.EndLogging();
-                    });
-                }
-
-                if (task == "RebuildAll")
-                {
-                    ThreadPool.QueueUserWorkItem(i =>
-                    {
-                        AnalyticsIndexBuilder.RebuildAllEntriesIndexes(false);
-                        this.LogQueue.EndLogging();
-                    });
-                }
-
-                if (task == "RebuildContacts")
-                {
-                    ThreadPool.QueueUserWorkItem(i =>
-                    {
-                        AnalyticsIndexBuilder.RebuildContactEntriesIndex(true);
-                        this.LogQueue.EndLogging();
-                    });
-                }
-
-                if (task == "RebuildAddresses")
-                {
-                    ThreadPool.QueueUserWorkItem(i =>
-                    {
-                        AnalyticsIndexBuilder.RebuildAddressEntriesIndex(true);
-                        this.LogQueue.EndLogging();
-                    });
-                }
-
-                if (task == "RebuildContactTags")
-                {
-                    ThreadPool.QueueUserWorkItem(i =>
-                    {
-                        AnalyticsIndexBuilder.RebuildContactTagEntriesIndex(true);
-                        this.LogQueue.EndLogging();
-                    });
-                }
-
-                if (task == "RebuildContactsAll")
-                {
-                    ThreadPool.QueueUserWorkItem(i =>
-                    {
-                        AnalyticsIndexBuilder.RebuildContactEntriesIndex(false);
-                        this.LogQueue.EndLogging();
-                    });
-                }
-
-                if (task == "RebuildAddressesAll")
-                {
-                    ThreadPool.QueueUserWorkItem(i =>
-                    {
-                        AnalyticsIndexBuilder.RebuildAddressEntriesIndex(false);
-                        this.LogQueue.EndLogging();
-                    });
-                }
-
-                if (task == "RebuildContactTagsAll")
-                {
-                    ThreadPool.QueueUserWorkItem(i =>
-                    {
-                        AnalyticsIndexBuilder.RebuildContactTagEntriesIndex(false);
-                        this.LogQueue.EndLogging();
-                    });
-                }
-
+                if (task == "RebuildAllKnown") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAllEntriesIndexe(true); });
+                if (task == "RebuildAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAllEntriesIndexe(false); });
+                if (task == "RebuildContacts") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactEntriesIndex(true); });
+                if (task == "RebuildAddresses") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAddressEntriesIndex(true); });
+                if (task == "RebuildContactTags") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactTagEntriesIndex(true); });
+                if (task == "RebuildVisits") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitEntriesIndex(true); });
+                if (task == "RebuildVisitPages") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEntriesIndex(true); });
+                if (task == "RebuildVisitPageEvents") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEventEntriesIndex(true); });
+                if (task == "RebuildContactsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactEntriesIndex(false); });
+                if (task == "RebuildAddressesAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAddressEntriesIndex(false); });
+                if (task == "RebuildContactTagsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactTagEntriesIndex(false);});
+                if (task == "RebuildVisitsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitEntriesIndex(false); });
+                if (task == "RebuildVisitPagesAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEntriesIndex(false); });
+                if (task == "RebuildVisitPageEventsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEventEntriesIndex(false); });
+            
                 this.Response.End();
 
                 return;
             }
 
             this.AnalyticsIndexFacets = this.AnalyticsSearchService.GetAnalyticsIndexFacets();
+        }
+
+        private void StartAsyncAction(Action action)
+        {
+            ThreadPool.QueueUserWorkItem(i =>
+            {
+                action.Invoke();
+                this.LogQueue.EndLogging();
+            });
         }
 
         private void GetFacets()

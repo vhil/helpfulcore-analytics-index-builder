@@ -6,15 +6,18 @@
     using System.Linq;
 
     using Sitecore.Exceptions;
-    
+    using Sitecore.Analytics.Aggregation.Data.Model;
+    using Sitecore.Analytics.Model;
+    using Sitecore.Analytics.Model.Entities;
+
     using Logging;
 
-    public abstract class AbstractContactSelectorProvider : IContactsSelectorProvider
+    public abstract class CollectionDataProvider : ICollectionDataProvider
     {
         protected ILoggingService Logger;
         public ArrayList Filters { get; protected set; }
 
-        protected AbstractContactSelectorProvider(ILoggingService logger)
+        protected CollectionDataProvider(ILoggingService logger)
         {
             if (logger == null) throw new ArgumentNullException(nameof(logger));
 
@@ -26,7 +29,7 @@
         {
             return this.SafeExecution($"getting contact ids to re-index", () =>
             {
-                var contactIds = this.GetContactIds().Where(x => !x._id.Equals(default(Guid)));
+                var contactIds = this.GetContactIdentifiers().Where(x => !x._id.Equals(default(Guid)));
 
                 if (this.Filters.Count > 0)
                 {
@@ -77,7 +80,13 @@
             return default(TEntry);
         }
 
-        protected abstract IEnumerable<ContactIdentifiersData> GetContactIds();
+        protected abstract IEnumerable<ContactIdentifiersData> GetContactIdentifiers();
         public abstract IEnumerable<Guid> GetAllContactIdsToReindex();
+        public abstract IEnumerable<VisitData> GetVisitDataToReindex();
+        public abstract IEnumerable<VisitData> GetVisitDataToReindex(IEnumerable<Guid> contactIds);
+        public abstract IEnumerable<IContact> GetContacts();
+        public abstract IEnumerable<IContact> GetContacts(IEnumerable<Guid> contactIds);
+        public abstract IEnumerable<IVisitAggregationContext> GetVisits();
+        public abstract IEnumerable<IVisitAggregationContext> GetVisits(IEnumerable<Guid> contactIds);
     }
 }

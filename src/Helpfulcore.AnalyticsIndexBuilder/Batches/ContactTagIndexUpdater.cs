@@ -4,12 +4,9 @@
     using System.Collections.Generic;
     using System.Linq;
 
-    using Sitecore.Analytics.Data.DataAccess;
     using Sitecore.Analytics.Model.Entities;
     using Sitecore.ContentSearch.Analytics.Models;
-    using Sitecore.Data;
 
-    using Collections;
     using ContentSearch;
     using Logging;
 
@@ -24,23 +21,14 @@
         {
         }
 
-        public override IEnumerable<Tuple<string, ITag, Guid>> LoadSourceEntries(IEnumerable<IContact> sources)
+        protected override IEnumerable<Tuple<string, ITag, Guid>> LoadSourceEntries(IEnumerable<IContact> sources)
         {
-            return sources.SelectMany(this.LoadSourceEntries);
-        }
-
-        public override IEnumerable<Tuple<string, ITag, Guid>> LoadSourceEntries(IContact source)
-        {
-            return source.Tags.Entries.Keys
-                .Where(tagKey => source.Tags.Entries[tagKey] != null)
-                .Select(tagKey => new Tuple<string, ITag, Guid>(tagKey, source.Tags.Entries[tagKey], source.Id.Guid));
-        }
-
-        public override IEnumerable<Tuple<string, ITag, Guid>> GetAllSourceEntries(IEnumerable<Guid> contactIds)
-        {
-            return new ConcurrentLazyContactIterator(contactIds
-                    .Select(id => DataAdapterManager.Provider.LoadContactReadOnly(new ID(id), this.ContactFactory)))
-                .SelectMany(this.LoadSourceEntries);
+            return sources.Where(contact => contact?.Tags != null).SelectMany(contact => contact.Tags.Entries.Keys
+                .Where(tagKey => contact.Tags.Entries[tagKey] != null)
+                .Select(tagKey => new Tuple<string, ITag, Guid>(
+                    tagKey,
+                    contact.Tags.Entries[tagKey],
+                    contact.Id.Guid)));
         }
 
         protected override ContactTagIndexable ConstructIndexable(Tuple<string, ITag, Guid> source)

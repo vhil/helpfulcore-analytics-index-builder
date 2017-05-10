@@ -6,12 +6,12 @@
     using System.Collections.Generic;
     using Sitecore.Analytics.Model.Entities;
 
-    public class ConcurrentLazyContactIterator : IEnumerable<IContact>
+    public class LazyContactIterator : IEnumerable<IContact>
     {
         private readonly IEnumerable<IContact> contactsEnumerable;
         private readonly ConcurrentDictionary<Guid, IContact> cache;
 
-        public ConcurrentLazyContactIterator(IEnumerable<IContact> contactsEnumerable)
+        public LazyContactIterator(IEnumerable<IContact> contactsEnumerable)
         {
             this.contactsEnumerable = contactsEnumerable;
             this.cache = new ConcurrentDictionary<Guid, IContact>();

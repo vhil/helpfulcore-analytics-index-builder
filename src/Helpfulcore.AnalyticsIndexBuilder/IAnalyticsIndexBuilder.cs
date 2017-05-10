@@ -6,6 +6,7 @@
     public interface IAnalyticsIndexBuilder : ILoggerChangeable
     {
         bool IsBusy { get; }
+        void RebuildAllEntriesIndexe(bool applyFilters);
 
         void RebuildContactEntriesIndex(bool applyFilters);
         void RebuildContactEntriesIndex(IEnumerable<Guid> contactIds);
@@ -15,16 +16,14 @@
 
         void RebuildContactTagEntriesIndex(bool applyFilters);
         void RebuildContactTagEntriesIndex(IEnumerable<Guid> contactIds);
-        void RebuildAllEntriesIndexes(bool applyFilters);
 
-        [Obsolete("Not implemented at the moment.", true)]
-        void RebuildVisitEntriesIndex();
+        void RebuildVisitEntriesIndex(bool applyFilters);
+        void RebuildVisitEntriesIndex(IEnumerable<Guid> contactIds);
 
-        [Obsolete("Not implemented at the moment.", true)]
-        void RebuildVisitPageEntriesIndex();
+        void RebuildVisitPageEntriesIndex(bool applyFilters);
+        void RebuildVisitPageEntriesIndex(IEnumerable<Guid> contactIds);
 
-        [Obsolete("Not implemented at the moment.", true)]
-        void RebuildVisitPageEventEntriesIndex();
-
+        void RebuildVisitPageEventEntriesIndex(bool applyFilters);
+        void RebuildVisitPageEventEntriesIndex(IEnumerable<Guid> contactIds);
     }
 }

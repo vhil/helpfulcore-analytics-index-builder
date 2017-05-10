@@ -119,8 +119,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Batches\ContactTagIndexUpdater.cs" />
-    <Compile Include="Collections\ConcurrentLazyContactIterator.cs" />
-    <Compile Include="ContactSelection\AbstractContactSelectorProvider.cs" />
+    <Compile Include="Batches\IBatchedEntryIndexUpdater.cs" />
+    <Compile Include="Batches\VisitIndexUpdater.cs" />
+    <Compile Include="Batches\VisitPageEventIndexUpdater.cs" />
+    <Compile Include="Batches\VisitPageIndexUpdater.cs" />
+    <Compile Include="Collections\LazyContactIterator.cs" />
+    <Compile Include="Collections\LazyVisitIterator.cs" />
+    <Compile Include="ContactSelection\CollectionDataProvider.cs" />
     <Compile Include="ContactSelection\IContactSelectionFilter.cs" />
     <Compile Include="ContactSelection\KnownContactsFilter.cs" />
     <Compile Include="ContentSearch\AnalyticsEntry.cs" />
@@ -130,11 +135,11 @@
     <Compile Include="ContentSearch\AnalyticsSearchService.cs" />
     <Compile Include="IAnalyticsIndexBuilder.cs" />
     <Compile Include="ContentSearch\IAnalyticsSearchService.cs" />
-    <Compile Include="ContactSelection\IContactsSelectorProvider.cs" />
+    <Compile Include="ContactSelection\ICollectionDataProvider.cs" />
     <Compile Include="ContactSelection\ContactIdentifiers.cs" />
     <Compile Include="ContactSelection\ContactIdentifiersData.cs" />
     <Compile Include="ILoggerChangeable.cs" />
-    <Compile Include="MongoDb\MongoDbContactSelectorProvider.cs" />
+    <Compile Include="MongoDb\MongoCollectionDataProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="sitecore\admin\AnalyticsIndexBuilder.aspx.cs">
       <DependentUpon>AnalyticsIndexBuilder.aspx</DependentUpon>
