@@ -6,24 +6,31 @@
     public interface IAnalyticsIndexBuilder : ILoggerChangeable
     {
         bool IsBusy { get; }
-        void RebuildAllEntriesIndexe(bool applyFilters);
 
-        void RebuildContactEntriesIndex(bool applyFilters);
-        void RebuildContactEntriesIndex(IEnumerable<Guid> contactIds);
+        void RebuildAllIndexables(bool applyFilters);
 
-        void RebuildAddressEntriesIndex(bool applyFilters);
-        void RebuildAddressEntriesIndex(IEnumerable<Guid> contactIds);
+        void RebuildContactIndexableTypes(bool applyFilters);
+        void RebuildContactIndexableTypes(IEnumerable<Guid> contactIds);
 
-        void RebuildContactTagEntriesIndex(bool applyFilters);
-        void RebuildContactTagEntriesIndex(IEnumerable<Guid> contactIds);
+        void RebuildVisitIndexableTypes(bool applyFilters);
+        void RebuildVisitIndexableTypes(IEnumerable<Guid> contactIds);
 
-        void RebuildVisitEntriesIndex(bool applyFilters);
-        void RebuildVisitEntriesIndex(IEnumerable<Guid> contactIds);
+        void RebuildContactIndexables(bool applyFilters);
+        void RebuildContactIndexables(IEnumerable<Guid> contactIds);
 
-        void RebuildVisitPageEntriesIndex(bool applyFilters);
-        void RebuildVisitPageEntriesIndex(IEnumerable<Guid> contactIds);
+        void RebuildAddressIndexables(bool applyFilters);
+        void RebuildAddressIndexables(IEnumerable<Guid> contactIds);
 
-        void RebuildVisitPageEventEntriesIndex(bool applyFilters);
-        void RebuildVisitPageEventEntriesIndex(IEnumerable<Guid> contactIds);
+        void RebuildContactTagIndexables(bool applyFilters);
+        void RebuildContactTagIndexables(IEnumerable<Guid> contactIds);
+
+        void RebuildVisitIndexables(bool applyFilters);
+        void RebuildVisitIndexables(IEnumerable<Guid> contactIds);
+
+        void RebuildVisitPageIndexables(bool applyFilters);
+        void RebuildVisitPageIndexables(IEnumerable<Guid> contactIds);
+
+        void RebuildVisitPageEventIndexables(bool applyFilters);
+        void RebuildVisitPageEventIndexables(IEnumerable<Guid> contactIds);
     }
 }

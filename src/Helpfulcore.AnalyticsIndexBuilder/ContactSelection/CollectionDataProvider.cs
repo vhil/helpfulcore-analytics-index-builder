@@ -10,6 +10,7 @@
     using Sitecore.Analytics.Model;
     using Sitecore.Analytics.Model.Entities;
 
+    using Collections;
     using Logging;
 
     public abstract class CollectionDataProvider : ICollectionDataProvider
@@ -78,6 +79,16 @@
             }
 
             return default(TEntry);
+        }
+
+        protected IEnumerable<IVisitAggregationContext> ToLazyIterator(IEnumerable<IVisitAggregationContext> visits)
+        {
+            return new LazyUniqueIterator<LazyVisit, IVisitAggregationContext>(visits.Select(v => new LazyVisit(v)));
+        }
+
+        protected IEnumerable<IContact> ToLazyIterator(IEnumerable<IContact> visits)
+        {
+            return new LazyUniqueIterator<LazyContact, IContact>(visits.Select(v => new LazyContact(v)));
         }
 
         protected abstract IEnumerable<ContactIdentifiersData> GetContactIdentifiers();

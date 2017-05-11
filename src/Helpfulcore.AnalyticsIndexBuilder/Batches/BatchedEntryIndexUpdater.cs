@@ -1,6 +1,7 @@
 ﻿namespace Helpfulcore.AnalyticsIndexBuilder.Batches
 {
     using System;
+    using System.Threading;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
@@ -13,33 +14,28 @@
     using ContentSearch;
     using Logging;
 
-    public abstract class BatchedEntryIndexUpdater<TSourceEntry, TParentObject, TIndexable> : IBatchedEntryIndexUpdater
+    public abstract class BatchedEntryIndexUpdater<TSourceEntry, TParentObject, TIndexable> : BatchedEntryIndexUpdater
         where TIndexable : AbstractIndexable
     {
         protected readonly IAnalyticsSearchService AnalyticsSearchService;
         protected readonly IContactFactory ContactFactory;
-        protected ILoggingService Logger;
         protected readonly int BatchSize;
         protected readonly int ConcurrentThreads;
-
-        public string IndexableType { get; private set; }
 
         protected BatchedEntryIndexUpdater(
             string indexableType,
             IAnalyticsSearchService analyticsSearchService,
             ILoggingService logger,
             int batchSize,
-            int concurrentThreads)
+            int concurrentThreads) : base(indexableType, logger)
         {
-            this.IndexableType = indexableType;
             this.AnalyticsSearchService = analyticsSearchService;
-            this.Logger = logger;
             this.BatchSize = batchSize;
             this.ConcurrentThreads = concurrentThreads;
             this.ContactFactory = Factory.CreateObject("model/entities/contact/factory", true) as IContactFactory;
         }
-        
-        public void ProcessInBatches(IEnumerable<object> parentObjects)
+
+        public override void ProcessInBatches(IEnumerable<object> parentObjects)
         {
             if (parentObjects == null) throw new ArgumentNullException(nameof(parentObjects));
 
@@ -50,6 +46,8 @@
         {
             if (sourceEntries == null) throw new ArgumentNullException(nameof(sourceEntries));
 
+            this.updated = 0;
+            this.failed = 0;
             long count = 0;
 
             var sourceList = new List<TSourceEntry>();
@@ -68,6 +66,7 @@
             if (sourceList.Any())
             {
                 this.SubmitBatch(sourceList);
+                sourceList.Clear();
             }
         }
 
@@ -79,14 +78,17 @@
             {
                 var indexables = this.LoadIndexablesFields(sourceEntries);
                 this.AnalyticsSearchService.UpdateIndexables(indexables);
+                this.updated += sourceEntries.Count;
             }
             catch (Exception ex)
             {
+                this.failed += sourceEntries.Count;
                 this.Logger.Error($"Error while updating batch of {sourceEntries.Count} {this.IndexableType} indexables. {ex.Message}", this);
             }
             finally
             {
-                this.Logger.Info($"Batch of {sourceEntries.Count} {this.IndexableType} indexables rebuilt and submitted to index.", this);
+                this.Logger.Debug($"Batch of {sourceEntries.Count} {this.IndexableType} indexables rebuilt and submitted to index.", this);
+                this.RaiseStatusChangedEvent();
             }
         }
 
@@ -110,6 +112,30 @@
             return indexables.ToArray();
         }
 
+        protected abstract TIndexable ConstructIndexable(TSourceEntry source);
+        protected abstract IEnumerable<TSourceEntry> LoadSourceEntries(IEnumerable<TParentObject> sources);
+    }
+
+    public abstract class BatchedEntryIndexUpdater : IBatchedEntryIndexUpdater
+    {
+        protected ILoggingService Logger;
+
+        protected BatchedEntryIndexUpdater(string indexableType, ILoggingService logger)
+        {
+            this.IndexableType = indexableType;
+            this.Logger = logger;
+            this.updated = 0;
+            this.failed = 0;
+        }
+
+        protected long updated;
+        protected long failed;
+
+        public long Updated => Interlocked.Read(ref this.updated);
+        public long Failed => Interlocked.Read(ref this.failed);
+        public string IndexableType { get; private set; }
+        public event Action StatusChanged;
+
         public void ChangeLogger(ILoggingService logger)
         {
             if (logger != null)
@@ -118,7 +144,17 @@
             }
         }
 
-        protected abstract TIndexable ConstructIndexable(TSourceEntry source);
-        protected abstract IEnumerable<TSourceEntry> LoadSourceEntries(IEnumerable<TParentObject> sources);
+        protected void RaiseStatusChangedEvent()
+        {
+            this.StatusChanged?.Invoke();
+        }
+
+        public void ResetStats()
+        {
+            this.updated = 0;
+            this.failed = 0;
+        }
+
+        public abstract void ProcessInBatches(IEnumerable<object> parentObjects);
     }
 }

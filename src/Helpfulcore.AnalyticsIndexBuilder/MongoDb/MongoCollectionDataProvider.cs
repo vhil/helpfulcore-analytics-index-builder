@@ -68,20 +68,20 @@
 
         public override IEnumerable<IContact> GetContacts(IEnumerable<Guid> contactIds)
         {
-            return new LazyContactIterator(contactIds.Select(
-                id => DataAdapterManager.Provider.LoadContactReadOnly(new ID(id), this.ContactFactory)));
+            return this.ToLazyIterator(contactIds
+                .Select(id => DataAdapterManager.Provider.LoadContactReadOnly(new ID(id), this.ContactFactory)));
         }
 
         public override IEnumerable<IVisitAggregationContext> GetVisits()
         {
-            return new LazyVisitIterator(this.GetVisitDataToReindex()
+            return this.ToLazyIterator(this.GetVisitDataToReindex()
                 .Select(data => new InteractionKey(data.ContactId, data.InteractionId))
                 .Select(key => this.CollectionDataProvider.CreateContextForInteraction(key)));
         }
 
         public override IEnumerable<IVisitAggregationContext> GetVisits(IEnumerable<Guid> contactIds)
         {
-            return new LazyVisitIterator(this.GetVisitDataToReindex(contactIds)
+            return this.ToLazyIterator(this.GetVisitDataToReindex(contactIds)
                 .Select(data => new InteractionKey(data.ContactId, data.InteractionId))
                 .Select(key => this.CollectionDataProvider.CreateContextForInteraction(key)));
         }

@@ -1,4 +1,6 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder
+﻿using System.Text;
+
+namespace Helpfulcore.AnalyticsIndexBuilder
 {
     using System;
     using System.Collections.Generic;
@@ -20,12 +22,12 @@
         protected readonly ICollectionDataProvider CollectionDataProvider;
         protected ILoggingService Logger;
 
-        private readonly IBatchedEntryIndexUpdater addressUpdater;
-        private readonly IBatchedEntryIndexUpdater contactUpdater;
-        private readonly IBatchedEntryIndexUpdater contactTagUpdater;
-        private readonly IBatchedEntryIndexUpdater visitUpdater;
-        private readonly IBatchedEntryIndexUpdater visitPageUpdater;
-        private readonly IBatchedEntryIndexUpdater visitPageEventUpdater;
+        private readonly BatchedEntryIndexUpdater addressUpdater;
+        private readonly BatchedEntryIndexUpdater contactUpdater;
+        private readonly BatchedEntryIndexUpdater contactTagUpdater;
+        private readonly BatchedEntryIndexUpdater visitUpdater;
+        private readonly BatchedEntryIndexUpdater visitPageUpdater;
+        private readonly BatchedEntryIndexUpdater visitPageEventUpdater;
 
         public AnalyticsIndexBuilder(
             IAnalyticsSearchService analyticsSearchService, 
@@ -64,11 +66,20 @@
             this.visitUpdater          =          new VisitIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
             this.visitPageUpdater      =      new VisitPageIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
             this.visitPageEventUpdater = new VisitPageEventIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
+
+            this.addressUpdater.StatusChanged += this.OnUpdatersStatusChanged;
+            this.contactUpdater.StatusChanged += this.OnUpdatersStatusChanged;
+            this.contactTagUpdater.StatusChanged += this.OnUpdatersStatusChanged;
+            this.visitUpdater.StatusChanged += this.OnUpdatersStatusChanged;
+            this.visitPageUpdater.StatusChanged += this.OnUpdatersStatusChanged;
+            this.visitPageEventUpdater.StatusChanged += this.OnUpdatersStatusChanged;
         }
+
+        
 
         public virtual bool IsBusy { get; protected set; }
 
-        public void RebuildAllEntriesIndexe(bool applyFilters)
+        public void RebuildAllIndexables(bool applyFilters)
         {
             this.SafeExecution($"rebuilding all {(applyFilters ? "filtered " : "")}entries indexes", () =>
             {
@@ -81,9 +92,62 @@
 
                 var updateTasks = new Action[]
                 {
+                    () => { this.contactUpdater.ProcessInBatches(contacts); },
+                    () => { this.addressUpdater.ProcessInBatches(contacts); },
+                    () => { this.contactTagUpdater.ProcessInBatches(contacts); },
+                    () => { this.visitUpdater.ProcessInBatches(visits); },
+                    () => { this.visitPageUpdater.ProcessInBatches(visits); },
+                    () => { this.visitPageEventUpdater.ProcessInBatches(visits); },
+                };
+
+                var options = new ParallelOptions { MaxDegreeOfParallelism = 3 };
+                Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+            });
+        }
+
+        public void RebuildContactIndexableTypes(bool applyFilters)
+        {
+            this.RebuildContactIndexableTypes(this.LoadContactIds(applyFilters));
+        }
+
+        public void RebuildContactIndexableTypes(IEnumerable<Guid> contactIds)
+        {
+            var ids = contactIds as ICollection<Guid> ?? contactIds.Distinct().ToList();
+
+            this.SafeExecution($"rebuilding [{this.contactUpdater.IndexableType}, {this.addressUpdater.IndexableType}, {this.contactTagUpdater.IndexableType}] indexables for {ids.Count} contacts", () =>
+            {
+                var contacts = this.CollectionDataProvider.GetContacts(ids);
+
+                var updateTasks = new Action[]
+                {
                     () => { this.addressUpdater.ProcessInBatches(contacts); },
                     () => { this.contactUpdater.ProcessInBatches(contacts); },
                     () => { this.contactTagUpdater.ProcessInBatches(contacts); },
+                };
+
+                var options = new ParallelOptions { MaxDegreeOfParallelism = updateTasks.Length };
+                Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+            });
+        }
+
+        public void RebuildVisitIndexableTypes(bool applyFilters)
+        {
+            this.RebuildVisitIndexableTypes(applyFilters ? this.LoadContactIds(true) : null);
+        }
+
+        public void RebuildVisitIndexableTypes(IEnumerable<Guid> contactIds)
+        {
+            var all = contactIds == null;
+            var ids = contactIds as ICollection<Guid> ?? contactIds?.Distinct().ToList();
+
+            this.SafeExecution($"rebuilding [{this.visitUpdater.IndexableType}, {this.visitPageUpdater.IndexableType}, {this.visitPageEventUpdater.IndexableType}] indexables {(all ? "for all visits in collection database" : $"for {ids.Count} contacts")}", () =>
+            {
+                var visits = all
+                    ? this.CollectionDataProvider.GetVisits()
+                    : this.CollectionDataProvider.GetVisits(ids);
+
+                var updateTasks = new Action[]
+                {
                     () => { this.visitUpdater.ProcessInBatches(visits); },
                     () => { this.visitPageUpdater.ProcessInBatches(visits); },
                     () => { this.visitPageEventUpdater.ProcessInBatches(visits); },
@@ -94,67 +158,109 @@
             });
         }
 
-        public virtual void RebuildContactEntriesIndex(bool applyFilters)
+        public virtual void RebuildContactIndexables(bool applyFilters)
         {
             this.SafeRebuildContactBasedIndex(this.contactUpdater, applyFilters);
         }
 
-        public virtual void RebuildContactEntriesIndex(IEnumerable<Guid> contactIds)
+        public virtual void RebuildContactIndexables(IEnumerable<Guid> contactIds)
         {
             this.SafeRebuildContactBasedIndex(this.contactUpdater, contactIds);
         }
 
-        public virtual void RebuildAddressEntriesIndex(bool applyFilters)
+        public virtual void RebuildAddressIndexables(bool applyFilters)
         {
             this.SafeRebuildContactBasedIndex(this.addressUpdater, applyFilters);
         }
 
-        public virtual void RebuildAddressEntriesIndex(IEnumerable<Guid> contactIds)
+        public virtual void RebuildAddressIndexables(IEnumerable<Guid> contactIds)
         {
             this.SafeRebuildContactBasedIndex(this.addressUpdater, contactIds);
         }
 
-        public virtual void RebuildContactTagEntriesIndex(bool applyFilters)
+        public virtual void RebuildContactTagIndexables(bool applyFilters)
         {
             this.SafeRebuildContactBasedIndex(this.contactTagUpdater, applyFilters);
         }
 
-        public virtual void RebuildContactTagEntriesIndex(IEnumerable<Guid> contactIds)
+        public virtual void RebuildContactTagIndexables(IEnumerable<Guid> contactIds)
         {
             this.SafeRebuildContactBasedIndex(this.contactTagUpdater, contactIds);
         }
 
-        public void RebuildVisitEntriesIndex(bool applyFilters)
+        public void RebuildVisitIndexables(bool applyFilters)
         {
             this.SafeRebuildVisitBasedIndex(this.visitUpdater, applyFilters);
         }
 
-        public void RebuildVisitEntriesIndex(IEnumerable<Guid> contactIds)
+        public void RebuildVisitIndexables(IEnumerable<Guid> contactIds)
         {
             this.SafeRebuildVisitBasedIndex(this.visitUpdater, contactIds);
         }
 
-        public void RebuildVisitPageEntriesIndex(bool applyFilters)
+        public void RebuildVisitPageIndexables(bool applyFilters)
         {
             this.SafeRebuildVisitBasedIndex(this.visitPageUpdater, applyFilters);
         }
 
-        public void RebuildVisitPageEntriesIndex(IEnumerable<Guid> contactIds)
+        public void RebuildVisitPageIndexables(IEnumerable<Guid> contactIds)
         {
             this.SafeRebuildVisitBasedIndex(this.visitPageUpdater, contactIds);
         }
 
-        public void RebuildVisitPageEventEntriesIndex(bool applyFilters)
+        public void RebuildVisitPageEventIndexables(bool applyFilters)
         {
             this.SafeRebuildVisitBasedIndex(this.visitPageEventUpdater, applyFilters);
         }
 
-        public void RebuildVisitPageEventEntriesIndex(IEnumerable<Guid> contactIds)
+        public void RebuildVisitPageEventIndexables(IEnumerable<Guid> contactIds)
         {
             this.SafeRebuildVisitBasedIndex(this.visitPageEventUpdater, contactIds);
         }
 
         #region infrastructure
+
+        private void ResetAllStats()
+        {
+            this.contactUpdater.ResetStats();
+            this.addressUpdater.ResetStats();
+            this.contactTagUpdater.ResetStats();
+            this.visitUpdater.ResetStats();
+            this.visitPageUpdater.ResetStats();
+            this.visitPageEventUpdater.ResetStats();
+        }
+
+        private void OnUpdatersStatusChanged()
+        {
+            var failed = new StringBuilder();
+            var updated = new StringBuilder();
+
+            updated.Append($"{this.contactUpdater.IndexableType}:{this.contactUpdater.Updated},");
+            updated.Append($"{this.addressUpdater.IndexableType}:{this.addressUpdater.Updated},");
+            updated.Append($"{this.contactTagUpdater.IndexableType}:{this.contactTagUpdater.Updated},");
+            updated.Append($"{this.visitUpdater.IndexableType}:{this.visitUpdater.Updated},");
+            updated.Append($"{this.visitPageUpdater.IndexableType}:{this.visitPageUpdater.Updated},");
+            updated.Append($"{this.visitPageEventUpdater.IndexableType}:{this.visitPageEventUpdater.Updated}");
+
+            this.Logger.Info($"Updated by indexable type: [{updated}]", this);
+
+            if (this.contactUpdater.Failed > 0
+                || this.addressUpdater.Failed > 0
+                || this.contactTagUpdater.Failed > 0
+                || this.visitUpdater.Failed > 0
+                || this.visitPageUpdater.Failed > 0
+                || this.visitPageEventUpdater.Failed > 0)
+            {
+                failed.Append($"{this.contactUpdater.IndexableType}:{this.contactUpdater.Failed},");
+                failed.Append($"{this.addressUpdater.IndexableType}:{this.addressUpdater.Failed},");
+                failed.Append($"{this.contactTagUpdater.IndexableType}:{this.contactTagUpdater.Failed},");
+                failed.Append($"{this.visitUpdater.IndexableType}:{this.visitUpdater.Failed},");
+                failed.Append($"{this.visitPageUpdater.IndexableType}:{this.visitPageUpdater.Failed},");
+                failed.Append($"{this.visitPageEventUpdater.IndexableType}:{this.visitPageEventUpdater.Failed}");
+
+                this.Logger.Info($"Failed by indexable type: [{updated}]", this);
+            }
+        }
 
         protected virtual void SafeRebuildContactBasedIndex(IBatchedEntryIndexUpdater updater, bool applyFilters)
         {
@@ -219,6 +325,8 @@
                 this.Logger.Warn($"Unable to execute {actionDescription}. AnalyticsIndexBuilder is busy at the moment with another operation.", this);
                 return;
             }
+
+            this.ResetAllStats();
 
             this.Logger.Info($"Start {actionDescription}. Batch size is set to {this.BatchSize}...", this);
 

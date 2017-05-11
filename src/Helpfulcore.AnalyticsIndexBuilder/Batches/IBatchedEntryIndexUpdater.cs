@@ -1,4 +1,6 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder.Batches
+﻿using System;
+
+namespace Helpfulcore.AnalyticsIndexBuilder.Batches
 {
     using System.Collections.Generic;
 
@@ -6,5 +8,8 @@
     {
         string IndexableType { get; }
         void ProcessInBatches(IEnumerable<object> parentObjects);
+        long Updated { get; }
+        long Failed { get; }
+        event Action StatusChanged;
     }
 }

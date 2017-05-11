@@ -123,8 +123,10 @@
     <Compile Include="Batches\VisitIndexUpdater.cs" />
     <Compile Include="Batches\VisitPageEventIndexUpdater.cs" />
     <Compile Include="Batches\VisitPageIndexUpdater.cs" />
-    <Compile Include="Collections\LazyContactIterator.cs" />
-    <Compile Include="Collections\LazyVisitIterator.cs" />
+    <Compile Include="Collections\ILazyUniqueItem.cs" />
+    <Compile Include="Collections\LazyContact.cs" />
+    <Compile Include="Collections\LazyUniqueIterator.cs" />
+    <Compile Include="Collections\LazyVisit.cs" />
     <Compile Include="ContactSelection\CollectionDataProvider.cs" />
     <Compile Include="ContactSelection\IContactSelectionFilter.cs" />
     <Compile Include="ContactSelection\KnownContactsFilter.cs" />

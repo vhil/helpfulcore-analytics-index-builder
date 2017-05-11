@@ -55,20 +55,20 @@
                 if (task == "GetLogProgress") this.GetLogProgress();
                 if (task == "GetFacets") this.GetFacets(); 
 
-                if (task == "RebuildAllKnown") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAllEntriesIndexe(true); });
-                if (task == "RebuildAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAllEntriesIndexe(false); });
-                if (task == "RebuildContacts") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactEntriesIndex(true); });
-                if (task == "RebuildAddresses") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAddressEntriesIndex(true); });
-                if (task == "RebuildContactTags") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactTagEntriesIndex(true); });
-                if (task == "RebuildVisits") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitEntriesIndex(true); });
-                if (task == "RebuildVisitPages") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEntriesIndex(true); });
-                if (task == "RebuildVisitPageEvents") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEventEntriesIndex(true); });
-                if (task == "RebuildContactsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactEntriesIndex(false); });
-                if (task == "RebuildAddressesAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAddressEntriesIndex(false); });
-                if (task == "RebuildContactTagsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactTagEntriesIndex(false);});
-                if (task == "RebuildVisitsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitEntriesIndex(false); });
-                if (task == "RebuildVisitPagesAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEntriesIndex(false); });
-                if (task == "RebuildVisitPageEventsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEventEntriesIndex(false); });
+                if (task == "RebuildAllKnown") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAllIndexables(true); });
+                if (task == "RebuildAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAllIndexables(false); });
+                if (task == "RebuildContacts") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactIndexables(true); });
+                if (task == "RebuildAddresses") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAddressIndexables(true); });
+                if (task == "RebuildContactTags") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactTagIndexables(true); });
+                if (task == "RebuildVisits") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitIndexables(true); });
+                if (task == "RebuildVisitPages") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageIndexables(true); });
+                if (task == "RebuildVisitPageEvents") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEventIndexables(true); });
+                if (task == "RebuildContactsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactIndexables(false); });
+                if (task == "RebuildAddressesAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAddressIndexables(false); });
+                if (task == "RebuildContactTagsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactTagIndexables(false);});
+                if (task == "RebuildVisitsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitIndexables(false); });
+                if (task == "RebuildVisitPagesAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageIndexables(false); });
+                if (task == "RebuildVisitPageEventsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEventIndexables(false); });
             
                 this.Response.End();
 
