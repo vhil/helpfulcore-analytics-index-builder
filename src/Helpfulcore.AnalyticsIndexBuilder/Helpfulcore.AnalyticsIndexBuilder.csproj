@@ -118,18 +118,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Batches\ContactTagIndexUpdater.cs" />
-    <Compile Include="Batches\IBatchedEntryIndexUpdater.cs" />
-    <Compile Include="Batches\VisitIndexUpdater.cs" />
-    <Compile Include="Batches\VisitPageEventIndexUpdater.cs" />
-    <Compile Include="Batches\VisitPageIndexUpdater.cs" />
+    <Compile Include="Updaters\ContactTagIndexableUpdater.cs" />
+    <Compile Include="Updaters\IBatchedIndexableUpdater.cs" />
+    <Compile Include="Updaters\VisitIndexableUpdater.cs" />
+    <Compile Include="Updaters\VisitPageEventIndexableUpdater.cs" />
+    <Compile Include="Updaters\VisitPageIndexableUpdater.cs" />
     <Compile Include="Collections\ILazyUniqueItem.cs" />
     <Compile Include="Collections\LazyContact.cs" />
     <Compile Include="Collections\LazyUniqueIterator.cs" />
     <Compile Include="Collections\LazyVisit.cs" />
-    <Compile Include="ContactSelection\CollectionDataProvider.cs" />
-    <Compile Include="ContactSelection\IContactSelectionFilter.cs" />
-    <Compile Include="ContactSelection\KnownContactsFilter.cs" />
+    <Compile Include="Data\CollectionDataProvider.cs" />
+    <Compile Include="Data\IContactSelectionFilter.cs" />
+    <Compile Include="Data\KnownContactsFilter.cs" />
     <Compile Include="ContentSearch\AnalyticsEntry.cs" />
     <Compile Include="ContentSearch\AnalyticsEntryFacet.cs" />
     <Compile Include="ContentSearch\AnalyticsEntryFacetResult.cs" />
@@ -137,9 +137,9 @@
     <Compile Include="ContentSearch\AnalyticsSearchService.cs" />
     <Compile Include="IAnalyticsIndexBuilder.cs" />
     <Compile Include="ContentSearch\IAnalyticsSearchService.cs" />
-    <Compile Include="ContactSelection\ICollectionDataProvider.cs" />
-    <Compile Include="ContactSelection\ContactIdentifiers.cs" />
-    <Compile Include="ContactSelection\ContactIdentifiersData.cs" />
+    <Compile Include="Data\ICollectionDataProvider.cs" />
+    <Compile Include="Data\ContactIdentifiers.cs" />
+    <Compile Include="Data\ContactIdentifiersData.cs" />
     <Compile Include="ILoggerChangeable.cs" />
     <Compile Include="MongoDb\MongoCollectionDataProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -150,9 +150,9 @@
     <Compile Include="sitecore\admin\AnalyticsIndexBuilder.aspx.designer.cs">
       <DependentUpon>AnalyticsIndexBuilder.aspx.cs</DependentUpon>
     </Compile>
-    <Compile Include="Batches\AddressIndexUpdater.cs" />
-    <Compile Include="Batches\BatchedEntryIndexUpdater.cs" />
-    <Compile Include="Batches\ContactIndexUpdater.cs" />
+    <Compile Include="Updaters\AddressIndexableUpdater.cs" />
+    <Compile Include="Updaters\BatchedIndexableUpdater.cs" />
+    <Compile Include="Updaters\ContactIndexableUpdater.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

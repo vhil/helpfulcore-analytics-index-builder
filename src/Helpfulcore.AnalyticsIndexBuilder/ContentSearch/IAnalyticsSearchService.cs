@@ -7,5 +7,7 @@
     {
         AnalyticsEntryFacetResult GetAnalyticsIndexFacets();
         void UpdateIndexables(IEnumerable<AbstractIndexable> contacts);
+        void DeleteIndexablesByType(string indexableType);
+        void ResetIndex();
     }
 }

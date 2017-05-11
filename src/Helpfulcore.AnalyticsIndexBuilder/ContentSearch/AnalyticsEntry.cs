@@ -8,5 +8,8 @@
     {
         [IndexField("type")]
         public string Type { get; set; }
+
+        [IndexField("_uniqueId")]
+        public IIndexableUniqueId UniqueId { get; set; }
     }
 }

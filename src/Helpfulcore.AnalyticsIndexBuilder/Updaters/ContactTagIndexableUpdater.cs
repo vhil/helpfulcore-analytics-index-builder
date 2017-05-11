@@ -1,4 +1,4 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder.Batches
+﻿namespace Helpfulcore.AnalyticsIndexBuilder.Updaters
 {
     using System;
     using System.Collections.Generic;
@@ -10,9 +10,9 @@
     using ContentSearch;
     using Logging;
 
-    public class ContactTagIndexUpdater : BatchedEntryIndexUpdater<Tuple<string, ITag, Guid>, IContact, ContactTagIndexable>
+    public class ContactTagIndexableUpdater : BatchedIndexableUpdater<Tuple<string, ITag, Guid>, IContact, ContactTagIndexable>
     {
-        public ContactTagIndexUpdater(
+        public ContactTagIndexableUpdater(
                 IAnalyticsSearchService analyticsSearchService, 
                 ILoggingService logger, 
                 int batchSize, 

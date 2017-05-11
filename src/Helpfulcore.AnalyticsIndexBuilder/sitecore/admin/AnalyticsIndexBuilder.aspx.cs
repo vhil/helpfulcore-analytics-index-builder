@@ -38,6 +38,7 @@
                 }
             }
 
+            this.AnalyticsSearchService.ChangeLogger(pageLogger);
             this.AnalyticsIndexFacets = new AnalyticsEntryFacetResult();
         }
 
@@ -55,21 +56,30 @@
                 if (task == "GetLogProgress") this.GetLogProgress();
                 if (task == "GetFacets") this.GetFacets(); 
 
-                if (task == "RebuildAllKnown") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAllIndexables(true); });
-                if (task == "RebuildAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAllIndexables(false); });
-                if (task == "RebuildContacts") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactIndexables(true); });
-                if (task == "RebuildAddresses") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAddressIndexables(true); });
-                if (task == "RebuildContactTags") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactTagIndexables(true); });
-                if (task == "RebuildVisits") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitIndexables(true); });
-                if (task == "RebuildVisitPages") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageIndexables(true); });
-                if (task == "RebuildVisitPageEvents") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEventIndexables(true); });
-                if (task == "RebuildContactsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactIndexables(false); });
-                if (task == "RebuildAddressesAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAddressIndexables(false); });
-                if (task == "RebuildContactTagsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactTagIndexables(false);});
-                if (task == "RebuildVisitsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitIndexables(false); });
-                if (task == "RebuildVisitPagesAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageIndexables(false); });
-                if (task == "RebuildVisitPageEventsAll") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEventIndexables(false); });
+                if (task == "rebuild-filtered") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAllIndexables(true); });
+                if (task == "rebuild-contact-filtered") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactIndexables(true); });
+                if (task == "rebuild-address-filtered") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAddressIndexables(true); });
+                if (task == "rebuild-contactTag-filtered") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactTagIndexables(true); });
+                if (task == "rebuild-visit-filtered") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitIndexables(true); });
+                if (task == "rebuild-visitPage-filtered") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageIndexables(true); });
+                if (task == "rebuild-visitPageEvent-filtered") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEventIndexables(true); });
+
+                if (task == "rebuild") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAllIndexables(false); });
+                if (task == "rebuild-contact") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactIndexables(false); });
+                if (task == "rebuild-address") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildAddressIndexables(false); });
+                if (task == "rebuild-contactTag") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildContactTagIndexables(false);});
+                if (task == "rebuild-visit") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitIndexables(false); });
+                if (task == "rebuild-visitPage") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageIndexables(false); });
+                if (task == "rebuild-visitPageEvent") this.StartAsyncAction(() => { AnalyticsIndexBuilder.RebuildVisitPageEventIndexables(false); });
             
+                if (task == "delete") this.StartAsyncAction(() => { this.AnalyticsSearchService.ResetIndex(); });
+                if (task == "delete-contact") this.StartAsyncAction(() => { this.AnalyticsSearchService.DeleteIndexablesByType("contact"); });
+                if (task == "delete-contactTag") this.StartAsyncAction(() => { this.AnalyticsSearchService.DeleteIndexablesByType("contacttag"); });
+                if (task == "delete-address") this.StartAsyncAction(() => { this.AnalyticsSearchService.DeleteIndexablesByType("address"); });
+                if (task == "delete-visit") this.StartAsyncAction(() => { this.AnalyticsSearchService.DeleteIndexablesByType("visit"); });
+                if (task == "delete-visitPage") this.StartAsyncAction(() => { this.AnalyticsSearchService.DeleteIndexablesByType("visitpage"); });
+                if (task == "delete-visitPageEvent") this.StartAsyncAction(() => { this.AnalyticsSearchService.DeleteIndexablesByType("visitpageevent"); });
+
                 this.Response.End();
 
                 return;

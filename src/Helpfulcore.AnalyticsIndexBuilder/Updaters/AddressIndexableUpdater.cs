@@ -1,4 +1,4 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder.Batches
+﻿namespace Helpfulcore.AnalyticsIndexBuilder.Updaters
 {
     using System;
     using System.Collections.Generic;
@@ -11,9 +11,9 @@
     using Logging;
     using ContentSearch;
 
-    public class AddressIndexUpdater : BatchedEntryIndexUpdater<Tuple<string, Guid, IAddress>, IContact, AddressIndexable>
+    public class AddressIndexableUpdater : BatchedIndexableUpdater<Tuple<string, Guid, IAddress>, IContact, AddressIndexable>
     {
-        public AddressIndexUpdater(
+        public AddressIndexableUpdater(
             IAnalyticsSearchService analyticsSearchService, 
             ILoggingService logger, 
             int batchSize, 

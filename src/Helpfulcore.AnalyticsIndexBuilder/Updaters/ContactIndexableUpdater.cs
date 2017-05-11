@@ -1,4 +1,4 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder.Batches
+﻿namespace Helpfulcore.AnalyticsIndexBuilder.Updaters
 {
     using System.Collections.Generic;
 
@@ -8,9 +8,9 @@
     using ContentSearch;
     using Logging;
 
-    public class ContactIndexUpdater : BatchedEntryIndexUpdater<IContact, IContact, ContactIndexable>
+    public class ContactIndexableUpdater : BatchedIndexableUpdater<IContact, IContact, ContactIndexable>
     {
-        public ContactIndexUpdater(
+        public ContactIndexableUpdater(
                 IAnalyticsSearchService analyticsSearchService, 
                 ILoggingService logger, 
                 int batchSize, 

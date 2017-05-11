@@ -1,4 +1,4 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder.Batches
+﻿namespace Helpfulcore.AnalyticsIndexBuilder.Updaters
 {
     using System.Collections.Generic;
     using ContentSearch;
@@ -6,9 +6,9 @@
     using Sitecore.Analytics.Aggregation.Data.Model;
     using Sitecore.ContentSearch.Analytics.Models;
 
-    public class VisitIndexUpdater : BatchedEntryIndexUpdater<IVisitAggregationContext, IVisitAggregationContext, VisitIndexable>
+    public class VisitIndexableUpdater : BatchedIndexableUpdater<IVisitAggregationContext, IVisitAggregationContext, VisitIndexable>
     {
-        public VisitIndexUpdater(
+        public VisitIndexableUpdater(
                 IAnalyticsSearchService analyticsSearchService, 
                 ILoggingService logger, 
                 int batchSize, 

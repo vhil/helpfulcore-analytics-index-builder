@@ -13,8 +13,7 @@
     using Sitecore.Analytics.Data.DataAccess;
     using Sitecore.Analytics.Model.Entities;
 
-    using Collections;
-    using ContactSelection;
+    using Data;
     using Logging;
 
     public class MongoCollectionDataProvider : CollectionDataProvider

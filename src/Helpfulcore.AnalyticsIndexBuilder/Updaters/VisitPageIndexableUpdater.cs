@@ -1,4 +1,4 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder.Batches
+﻿namespace Helpfulcore.AnalyticsIndexBuilder.Updaters
 {
     using System;
     using System.Collections.Generic;
@@ -11,9 +11,9 @@
     using ContentSearch;
     using Logging;
 
-    public class VisitPageIndexUpdater : BatchedEntryIndexUpdater<Tuple<PageData, Guid, Guid>, IVisitAggregationContext, VisitPageIndexable>
+    public class VisitPageIndexableUpdater : BatchedIndexableUpdater<Tuple<PageData, Guid, Guid>, IVisitAggregationContext, VisitPageIndexable>
     {
-        public VisitPageIndexUpdater(
+        public VisitPageIndexableUpdater(
                 IAnalyticsSearchService analyticsSearchService, 
                 ILoggingService logger, 
                 int batchSize, 

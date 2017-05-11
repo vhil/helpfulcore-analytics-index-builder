@@ -1,4 +1,4 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder.ContactSelection
+﻿namespace Helpfulcore.AnalyticsIndexBuilder.Data
 {
     using System;
     using System.Collections;

@@ -1,10 +1,9 @@
-﻿using System;
-
-namespace Helpfulcore.AnalyticsIndexBuilder.Batches
+﻿namespace Helpfulcore.AnalyticsIndexBuilder.Updaters
 {
+    using System;
     using System.Collections.Generic;
 
-    public interface IBatchedEntryIndexUpdater : ILoggerChangeable
+    public interface IBatchedIndexableUpdater : ILoggerChangeable
     {
         string IndexableType { get; }
         void ProcessInBatches(IEnumerable<object> parentObjects);

@@ -38,7 +38,7 @@
         {
             var indexables = indexablesToUpdate as ICollection<AbstractIndexable> ?? indexablesToUpdate.ToList();
 
-            this.SafeExecution($"Updating {indexables.Count} indexables", () =>
+            this.SafeExecution($"Updating {indexables.Count} indexables in", () =>
             {
                 using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateUpdateContext())
                 {
@@ -54,6 +54,44 @@
                     context.Commit();
                 }
             });
+        }
+
+        public virtual void DeleteIndexablesByType(string indexableType)
+        {
+            indexableType = indexableType.Trim().ToLower();
+            var existingIndexablesIds = this.GetAllUniqueIdsByType(indexableType);
+
+            this.SafeExecution($"Deleting all indexables of type [{indexableType}] from", () =>
+            {
+                using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateDeleteContext())
+                {
+                    foreach (var indexableId in existingIndexablesIds)
+                    {
+                        context.Delete(indexableId);
+                    }
+
+                    context.Commit();
+                }
+            }, true);
+        }
+
+        public virtual void ResetIndex()
+        {
+            this.SafeExecution($"Erasing everything from ", () =>
+            {
+                using (var index = ContentSearchManager.GetIndex(this.AnalyticsIndexName))
+                {
+                    index.Reset();
+                }
+            }, true);
+        }
+
+        protected virtual IEnumerable<IIndexableUniqueId> GetAllUniqueIdsByType(string indexableType)
+        {
+            using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateSearchContext())
+            {
+                return context.GetQueryable<AnalyticsEntry>().Where(x => x.Type == indexableType).ToList().Select(x => x.UniqueId);
+            }
         }
 
         protected virtual Dictionary<string, object> BuildIndexableDocument(IIndexable indexable, IProviderUpdateContext context)
@@ -83,9 +121,16 @@
             return documentBuilder.Document.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
-        protected virtual void SafeExecution(string actionDescription, Action action)
+        protected virtual void SafeExecution(string actionDescription, Action action, bool info = false)
         {
-            this.Logger.Debug($"{actionDescription} in '{this.AnalyticsIndexName}' content search index..", this);
+            if (info)
+            {
+                this.Logger.Info($"{actionDescription} '{this.AnalyticsIndexName}' content search index...", this);
+            }
+            else
+            {
+                this.Logger.Debug($"{actionDescription} '{this.AnalyticsIndexName}' content search index...", this);
+            }
 
             try
             {
@@ -93,11 +138,22 @@
             }
             catch (Exception ex)
             {
-                this.Logger.Error($"Error while {actionDescription}. {ex.Message}", this, ex);
+                this.Logger.Error($"Error while {actionDescription} '{this.AnalyticsIndexName}'. {ex.Message}", this, ex);
+            }
+            finally
+            {
+                if (info)
+                {
+                    this.Logger.Info($"DONE {actionDescription} '{this.AnalyticsIndexName}' content search index.", this);
+                }
+                else
+                {
+                    this.Logger.Debug($"DONE {actionDescription} '{this.AnalyticsIndexName}' content search index.", this);
+                }
             }
         }
 
-        public void ChangeLogger(ILoggingService logger)
+        public virtual void ChangeLogger(ILoggingService logger)
         {
             if (logger != null)
             {

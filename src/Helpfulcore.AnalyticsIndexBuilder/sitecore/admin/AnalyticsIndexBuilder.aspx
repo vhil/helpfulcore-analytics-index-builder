@@ -44,9 +44,10 @@
      <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <div class="col-md-9 text-right">
-                    <button type="button" class="btn btn-success btn-xs btn-active btn-rebuild-all-known">Rebuild all filtered indexables</button>
-                    <button type="button" class="btn btn-primary btn-xs btn-active btn-rebuild-all">Rebuild all indexables</button>
+                <div class="col-md-12 text-right">
+                    <button type="button" data-apply-filter="true" data-action="rebuild" data-type="" class="btn btn-success btn-active">Rebuild all filtered indexables</button>
+                    <button type="button" data-action="rebuild" data-type="" class="btn btn-primary btn-active">Rebuild all indexables</button>
+                    <button type="button" data-action="delete" data-type="" class="btn btn-danger btn-active">Reset analytics index</button>
                 </div>
             </div>
         </div>
@@ -54,18 +55,18 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <div class="col-md-9">
+                <div class="col-md-12">
                     <h3>Analytics index overview</h3>
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
                                 <tr>
                                     <th>Indexable type</th>
-                                    <th>Count of entries</th>
-                                    <th>Actions</th>
-                                    <th width="0"></th>
-                                    <th></th>
+                                    <th>Count of indexables</th>
                                     <th width="120"></th>
+                                    <th>Actions</th>
+                                    <th></th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -74,20 +75,25 @@
                                 <tr class="facet" data-facet-type="<%=facet.Type%>">
                                     <td class="facet-name"><%=facet.Type %></td>
                                     <td class="facet-count"><%=facet.Count %></td>
+                                    <td class="action-status text-success"></td>
                                     <td>
                                         <% if (facet.ActionsAvailable)
                                         { %>
-                                        <button type="button" class="pull-right btn btn-success btn-xs btn-active btn-rebuild-<%=facet.Type%>">Rebuild filtered indexables of this type</button>
+                                        <button type="button" data-apply-filter="true" data-action="rebuild" data-type="<%=facet.Type%>" class="btn btn-success btn-xs btn-active">Rebuild filtered indexables of this type</button>
                                         <%} %>
                                     </td>
-                                    <td></td>
                                      <td>
                                         <% if (facet.ActionsAvailable)
                                         { %>
-                                        <button type="button" class="pull-left btn btn-primary btn-xs btn-active btn-rebuild-all-<%=facet.Type%>">Rebuild all indexables of this type</button>
+                                        <button type="button" data-apply-filter="false" data-action="rebuild" data-type="<%=facet.Type%>" class="btn btn-primary btn-xs btn-active">Rebuild all indexables of this type</button>
                                         <%} %>
                                     </td>
-                                    <td class="action-status text-success"></td>
+                                    <td>
+                                        <% if (facet.ActionsAvailable)
+                                           { %>
+                                            <button type="button" data-action="delete" data-type="<%=facet.Type%>" class="btn btn-danger btn-xs btn-active">Delete all indexables of this type</button>
+                                        <%} %>
+                                    </td>
                                 </tr>
                                 <%} %>
                             </tbody>
@@ -115,88 +121,38 @@
     <script>
         $(function () {
 
-            $(".btn-rebuild-all").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildAll();
-                getProgress();
-            });
+            $(".btn").on("click", function (e) {
+                var applyFilters = $(this).attr("data-apply-filter") === "true";
+                var action = $(this).attr("data-action");
+                var type = $(this).attr("data-type");
 
-            $(".btn-rebuild-all-known").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildAllKnown();
-                getProgress();
-            });
+                if (action === "undefined") {
+                    action = "";
+                }
 
-            $(".btn-rebuild-contact").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildContacts(false);
-                getProgress();
-            });
+                if (type === "undefined") {
+                    type = "";
+                }
 
-            $(".btn-rebuild-address").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildAddresses(false);
-                getProgress();
-            });
+                if (confirm(getConfirmMessage(action, type, applyFilters))) {
+                    
+                    disableAllButtons(this);
 
-            $(".btn-rebuild-contactTag").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildContactTags(false);
-                getProgress();
-            });
+                    var command = action;
 
-            $(".btn-rebuild-visit").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildVisits(false);
-                getProgress();
-            });
+                    if (type !== "") {
+                        command += "-" + type;
+                    }
 
-            $(".btn-rebuild-visitPage").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildVisitPages(false);
-                getProgress();
-            });
+                    if (applyFilters) {
+                        command += "-filtered";
+                    }
 
-            $(".btn-rebuild-visitPageEvent").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildVisitPageEvents(false);
-                getProgress();
-            });
-            
-            $(".btn-rebuild-all-contact").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildContacts(true);
-                getProgress();
-            });
+                    var url = window.location.href + getJoiner() + "task=" + command;
+                    $.get(url, function() {});
 
-            $(".btn-rebuild-all-address").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildAddresses(true);
-                getProgress();
-            });
-
-            $(".btn-rebuild-all-contactTag").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildContactTags(true);
-                getProgress();
-            });
-
-            $(".btn-rebuild-all-visit").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildVisits(true);
-                getProgress();
-            });
-
-            $(".btn-rebuild-all-visitPage").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildVisitPages(true);
-                getProgress();
-            });
-
-            $(".btn-rebuild-all-visitPageEvent").on("click", function (e) {
-                disableAllButtons(this);
-                rebuildVisitPageEvents(true);
-                getProgress();
+                    getProgress();
+                }
             });
 
             if (<%=AnalyticsIndexBuilder.IsBusy.ToString().ToLower()%>)
@@ -205,6 +161,34 @@
             }
 
         });
+
+        function getConfirmMessage(action, type, filtered) {
+            if (type === "" && filtered === false && action === "delete") {
+                return "Are you sure you want to reset the analytics index? This will erase all indexed data.";
+            }
+
+            var message = "You are about to " + action + " all ";
+
+            if (filtered) {
+                message += "filtered ";
+            }
+
+            message += "indexables ";
+
+            if (type !== "") {
+                message += "of type '" + type + "' ";
+            }
+
+            if (action === "delete") {
+                message += "from ";
+            } else {
+                message += "in ";
+            }
+
+            message += "the analytics index. Do you confirm?";
+
+            return message;
+        }
 
         function updateStats() {
             var url = window.location.href + getJoiner() + "task=GetFacets";
@@ -273,52 +257,6 @@
             }
         }
             
-        function rebuildAllKnown() {
-            var url = window.location.href + getJoiner() + "task=RebuildAllKnown";
-            $.get(url, function (data) {});
-        }
-
-        function rebuildAll() {
-            var url = window.location.href + getJoiner() + "task=RebuildAll";
-            $.get(url, function (data) {});
-        }
-
-        function rebuildContacts(all) {
-            var url = window.location.href + getJoiner() + "task=RebuildContacts";
-            if (all) {url += "All";}
-            $.get(url, function (data) {});
-        }
-
-        function rebuildAddresses(all) {
-            var url = window.location.href + getJoiner() + "task=RebuildAddresses";
-            if (all) {url += "All";}
-            $.get(url, function (data) {});
-        }
-
-        function rebuildContactTags(all) {
-            var url = window.location.href + getJoiner() + "task=RebuildContactTags";
-            if (all) {url += "All";}
-            $.get(url, function (data) {});
-        }
-        
-        function rebuildVisits(all) {
-            var url = window.location.href + getJoiner() + "task=RebuildVisits";
-            if (all) {url += "All";}
-            $.get(url, function (data) {});
-        }
-
-        function rebuildVisitPages(all) {
-            var url = window.location.href + getJoiner() + "task=RebuildVisitPages";
-            if (all) {url += "All";}
-            $.get(url, function (data) {});
-        }
-
-        function rebuildVisitPageEvents(all) {
-            var url = window.location.href + getJoiner() + "task=RebuildVisitPageEvents";
-            if (all) {url += "All";}
-            $.get(url, function (data) {});
-        }
-
         function disableAllButtons(button) {
             var facetEl = $(button).parent().parent();
             facetEl.find(".action-status").html("<strong>In progress...</strong>");

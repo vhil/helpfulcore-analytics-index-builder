@@ -1,17 +1,16 @@
-﻿using System.Text;
-
-namespace Helpfulcore.AnalyticsIndexBuilder
+﻿namespace Helpfulcore.AnalyticsIndexBuilder
 {
     using System;
+    using System.Text;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
     using Sitecore.Analytics.Model.Entities;
 
-    using ContactSelection;
+    using Data;
     using ContentSearch;
-    using Batches;
+    using Updaters;
     using Logging;
 
     public class AnalyticsIndexBuilder : IAnalyticsIndexBuilder
@@ -22,18 +21,18 @@ namespace Helpfulcore.AnalyticsIndexBuilder
         protected readonly ICollectionDataProvider CollectionDataProvider;
         protected ILoggingService Logger;
 
-        private readonly BatchedEntryIndexUpdater addressUpdater;
-        private readonly BatchedEntryIndexUpdater contactUpdater;
-        private readonly BatchedEntryIndexUpdater contactTagUpdater;
-        private readonly BatchedEntryIndexUpdater visitUpdater;
-        private readonly BatchedEntryIndexUpdater visitPageUpdater;
-        private readonly BatchedEntryIndexUpdater visitPageEventUpdater;
+        private readonly BatchedIndexableUpdater addressUpdater;
+        private readonly BatchedIndexableUpdater contactUpdater;
+        private readonly BatchedIndexableUpdater contactTagUpdater;
+        private readonly BatchedIndexableUpdater visitUpdater;
+        private readonly BatchedIndexableUpdater visitPageUpdater;
+        private readonly BatchedIndexableUpdater visitPageEventUpdater;
 
         public AnalyticsIndexBuilder(
             IAnalyticsSearchService analyticsSearchService, 
             ICollectionDataProvider contactSelector, 
             ILoggingService logger,
-            string batchSize = "500",
+            string batchSize = "1000",
             string concurrentThreads = "4"): this(
                 analyticsSearchService, 
                 contactSelector, 
@@ -47,7 +46,7 @@ namespace Helpfulcore.AnalyticsIndexBuilder
             IAnalyticsSearchService analyticsSearchService,
             ICollectionDataProvider contactSelector,
             ILoggingService logger,
-            int batchSize = 500,
+            int batchSize = 1000,
             int concurrentThreads = 4)
         {
             if (analyticsSearchService == null) throw new ArgumentNullException(nameof(analyticsSearchService));
@@ -60,12 +59,12 @@ namespace Helpfulcore.AnalyticsIndexBuilder
             this.BatchSize = batchSize;
             this.ConcurrentThreads = concurrentThreads;
 
-            this.addressUpdater        =        new AddressIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
-            this.contactUpdater        =        new ContactIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
-            this.contactTagUpdater     =     new ContactTagIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
-            this.visitUpdater          =          new VisitIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
-            this.visitPageUpdater      =      new VisitPageIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
-            this.visitPageEventUpdater = new VisitPageEventIndexUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
+            this.addressUpdater        =        new AddressIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
+            this.contactUpdater        =        new ContactIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
+            this.contactTagUpdater     =     new ContactTagIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
+            this.visitUpdater          =          new VisitIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
+            this.visitPageUpdater      =      new VisitPageIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
+            this.visitPageEventUpdater = new VisitPageEventIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
 
             this.addressUpdater.StatusChanged += this.OnUpdatersStatusChanged;
             this.contactUpdater.StatusChanged += this.OnUpdatersStatusChanged;
@@ -75,13 +74,11 @@ namespace Helpfulcore.AnalyticsIndexBuilder
             this.visitPageEventUpdater.StatusChanged += this.OnUpdatersStatusChanged;
         }
 
-        
-
         public virtual bool IsBusy { get; protected set; }
 
         public void RebuildAllIndexables(bool applyFilters)
         {
-            this.SafeExecution($"rebuilding all {(applyFilters ? "filtered " : "")}entries indexes", () =>
+            this.SafeExecution($"rebuilding all {(applyFilters ? "filtered " : "")}indexables", () =>
             {
                 var contactIds = this.LoadContactIds(applyFilters);
 
@@ -235,14 +232,14 @@ namespace Helpfulcore.AnalyticsIndexBuilder
             var failed = new StringBuilder();
             var updated = new StringBuilder();
 
-            updated.Append($"{this.contactUpdater.IndexableType}:{this.contactUpdater.Updated},");
-            updated.Append($"{this.addressUpdater.IndexableType}:{this.addressUpdater.Updated},");
-            updated.Append($"{this.contactTagUpdater.IndexableType}:{this.contactTagUpdater.Updated},");
-            updated.Append($"{this.visitUpdater.IndexableType}:{this.visitUpdater.Updated},");
-            updated.Append($"{this.visitPageUpdater.IndexableType}:{this.visitPageUpdater.Updated},");
-            updated.Append($"{this.visitPageEventUpdater.IndexableType}:{this.visitPageEventUpdater.Updated}");
+            updated.Append($"{this.contactUpdater.IndexableType}: {this.contactUpdater.Updated}, ");
+            updated.Append($"{this.addressUpdater.IndexableType}: {this.addressUpdater.Updated}, ");
+            updated.Append($"{this.contactTagUpdater.IndexableType}: {this.contactTagUpdater.Updated}, ");
+            updated.Append($"{this.visitUpdater.IndexableType}: {this.visitUpdater.Updated}, ");
+            updated.Append($"{this.visitPageUpdater.IndexableType}: {this.visitPageUpdater.Updated}, ");
+            updated.Append($"{this.visitPageEventUpdater.IndexableType}: {this.visitPageEventUpdater.Updated}");
 
-            this.Logger.Info($"Updated by indexable type: [{updated}]", this);
+            this.Logger.Info($"Updated by indexable type: [ {updated.ToString().Replace("type:", "")} ]", this);
 
             if (this.contactUpdater.Failed > 0
                 || this.addressUpdater.Failed > 0
@@ -251,20 +248,20 @@ namespace Helpfulcore.AnalyticsIndexBuilder
                 || this.visitPageUpdater.Failed > 0
                 || this.visitPageEventUpdater.Failed > 0)
             {
-                failed.Append($"{this.contactUpdater.IndexableType}:{this.contactUpdater.Failed},");
-                failed.Append($"{this.addressUpdater.IndexableType}:{this.addressUpdater.Failed},");
-                failed.Append($"{this.contactTagUpdater.IndexableType}:{this.contactTagUpdater.Failed},");
-                failed.Append($"{this.visitUpdater.IndexableType}:{this.visitUpdater.Failed},");
-                failed.Append($"{this.visitPageUpdater.IndexableType}:{this.visitPageUpdater.Failed},");
-                failed.Append($"{this.visitPageEventUpdater.IndexableType}:{this.visitPageEventUpdater.Failed}");
+                failed.Append($"{this.contactUpdater.IndexableType}: {this.contactUpdater.Failed},");
+                failed.Append($"{this.addressUpdater.IndexableType}: {this.addressUpdater.Failed},");
+                failed.Append($"{this.contactTagUpdater.IndexableType}: {this.contactTagUpdater.Failed},");
+                failed.Append($"{this.visitUpdater.IndexableType}: {this.visitUpdater.Failed},");
+                failed.Append($"{this.visitPageUpdater.IndexableType}: {this.visitPageUpdater.Failed},");
+                failed.Append($"{this.visitPageEventUpdater.IndexableType}: {this.visitPageEventUpdater.Failed}");
 
-                this.Logger.Info($"Failed by indexable type: [{updated}]", this);
+                this.Logger.Info($"Failed by indexable type: [ {failed.ToString().Replace("type:", "")} ]", this);
             }
         }
 
-        protected virtual void SafeRebuildContactBasedIndex(IBatchedEntryIndexUpdater updater, bool applyFilters)
+        protected virtual void SafeRebuildContactBasedIndex(IBatchedIndexableUpdater updater, bool applyFilters)
         {
-            this.SafeExecution($"rebuilding {(applyFilters ? "filtered " : "")}{updater.IndexableType} entries index", () =>
+            this.SafeExecution($"rebuilding {(applyFilters ? "filtered " : "")}[{updater.IndexableType}] indexables index", () =>
             {
                 var contactIds = this.LoadContactIds(applyFilters);
 
@@ -272,19 +269,19 @@ namespace Helpfulcore.AnalyticsIndexBuilder
             });
         }
 
-        protected virtual void SafeRebuildContactBasedIndex(IBatchedEntryIndexUpdater updater, IEnumerable<Guid> contactIds)
+        protected virtual void SafeRebuildContactBasedIndex(IBatchedIndexableUpdater updater, IEnumerable<Guid> contactIds)
         {
             var ids = contactIds as ICollection<Guid> ?? contactIds.ToArray();
 
-            this.SafeExecution($"rebuilding {updater.IndexableType} entries index for {ids.Count} contacts", () =>
+            this.SafeExecution($"rebuilding [{updater.IndexableType}] indexables index for {ids.Count} contacts", () =>
             {
                 updater.ProcessInBatches(this.CollectionDataProvider.GetContacts(ids));
             });
         }
 
-        protected virtual void SafeRebuildVisitBasedIndex(IBatchedEntryIndexUpdater updater, bool applyFilters)
+        protected virtual void SafeRebuildVisitBasedIndex(IBatchedIndexableUpdater updater, bool applyFilters)
         {
-            this.SafeExecution($"rebuilding {(applyFilters ? "filtered " : "")}{updater.IndexableType} entries index", () =>
+            this.SafeExecution($"rebuilding {(applyFilters ? "filtered " : "")}[{updater.IndexableType}] indexables index", () =>
             {
                 var visits = applyFilters
                     ? this.CollectionDataProvider.GetVisits(this.LoadContactIds(true))
@@ -294,11 +291,11 @@ namespace Helpfulcore.AnalyticsIndexBuilder
             });
         }
 
-        protected virtual void SafeRebuildVisitBasedIndex(IBatchedEntryIndexUpdater updater, IEnumerable<Guid> contactIds)
+        protected virtual void SafeRebuildVisitBasedIndex(IBatchedIndexableUpdater updater, IEnumerable<Guid> contactIds)
         {
             var ids = contactIds as ICollection<Guid> ?? contactIds.ToArray();
 
-            this.SafeExecution($"rebuilding {updater.IndexableType} entries index for {ids.Count} contacts", () =>
+            this.SafeExecution($"rebuilding [{updater.IndexableType}] indexables index for {ids.Count} contacts", () =>
             {
                 updater.ProcessInBatches(this.CollectionDataProvider.GetVisits(ids));
             });

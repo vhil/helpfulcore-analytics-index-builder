@@ -1,4 +1,4 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder.Batches
+﻿namespace Helpfulcore.AnalyticsIndexBuilder.Updaters
 {
     using System;
     using System.Threading;
@@ -14,7 +14,7 @@
     using ContentSearch;
     using Logging;
 
-    public abstract class BatchedEntryIndexUpdater<TSourceEntry, TParentObject, TIndexable> : BatchedEntryIndexUpdater
+    public abstract class BatchedIndexableUpdater<TSourceEntry, TParentObject, TIndexable> : BatchedIndexableUpdater
         where TIndexable : AbstractIndexable
     {
         protected readonly IAnalyticsSearchService AnalyticsSearchService;
@@ -22,7 +22,7 @@
         protected readonly int BatchSize;
         protected readonly int ConcurrentThreads;
 
-        protected BatchedEntryIndexUpdater(
+        protected BatchedIndexableUpdater(
             string indexableType,
             IAnalyticsSearchService analyticsSearchService,
             ILoggingService logger,
@@ -83,11 +83,11 @@
             catch (Exception ex)
             {
                 this.failed += sourceEntries.Count;
-                this.Logger.Error($"Error while updating batch of {sourceEntries.Count} {this.IndexableType} indexables. {ex.Message}", this);
+                this.Logger.Error($"Error while updating batch of {sourceEntries.Count} [{this.IndexableType} ]indexables. {ex.Message}", this);
             }
             finally
             {
-                this.Logger.Debug($"Batch of {sourceEntries.Count} {this.IndexableType} indexables rebuilt and submitted to index.", this);
+                this.Logger.Debug($"Batch of {sourceEntries.Count} [{this.IndexableType}] indexables rebuilt and submitted to index.", this);
                 this.RaiseStatusChangedEvent();
             }
         }
@@ -116,11 +116,11 @@
         protected abstract IEnumerable<TSourceEntry> LoadSourceEntries(IEnumerable<TParentObject> sources);
     }
 
-    public abstract class BatchedEntryIndexUpdater : IBatchedEntryIndexUpdater
+    public abstract class BatchedIndexableUpdater : IBatchedIndexableUpdater
     {
         protected ILoggingService Logger;
 
-        protected BatchedEntryIndexUpdater(string indexableType, ILoggingService logger)
+        protected BatchedIndexableUpdater(string indexableType, ILoggingService logger)
         {
             this.IndexableType = indexableType;
             this.Logger = logger;
