@@ -147,12 +147,12 @@
                     <dd><p>This action gets all indexables from collection database (Contacts or Interactions, depending on selected indexable type) and rebuilds index for them.</p></dd>
                     <dt>Reset analytics index</dt>
                     <dd><p>This action erases all data which currently exists in the <code>sitecore_analytics_index</code> ContentSearch index.</p></dd>
-                    <dt>Delete all indexablesof this type</dt>
+                    <dt>Delete all indexables of this type</dt>
                     <dd><p>Deletes indexed data of selected type from the <code>sitecore_analytics_index</code> ContentSearch index.</p></dd>
                     <dt>Rebuild filtered indexables of this type</dt>
-                    <dd><p>This action does same as <code>Rebuild filtered indexables</code> action but only for indexables of selected type.</p></dd>
+                    <dd><p>This action does same as <code>Rebuild filtered indexables</code> but only for indexables of selected type.</p></dd>
                     <dt>Rebuild all indexables of this type</dt>
-                    <dd><p>This action does same as <code>Rebuild all indexables</code> action but only for indexables of selected type.</p></dd>
+                    <dd><p>This action does same as <code>Rebuild all indexables</code> but only for indexables of selected type.</p></dd>
                 </dl>
                 <br/>
                 <blockquote class="blockquote-reverse">
