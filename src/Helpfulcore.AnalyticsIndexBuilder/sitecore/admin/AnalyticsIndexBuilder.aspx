@@ -1,4 +1,5 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="AnalyticsIndexBuilder.aspx.cs" Inherits="Helpfulcore.AnalyticsIndexBuilder.sitecore.admin.AnalyticsIndexBuilderPage" %>
+
 <%@ Import Namespace="Helpfulcore.Logging" %>
 
 <!DOCTYPE html>
@@ -29,6 +30,21 @@
             padding-right: 7px;
             padding-left: 7px;
         }
+
+        @media (min-width: 1200px) {
+            .dl-horizontal dt {
+                float: left;
+                width: 295px;
+                overflow: hidden;
+                clear: left;
+                text-align: left;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .dl-horizontal dd {
+                margin-left: 295px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -41,7 +57,8 @@
             </div>
         </div>
     </div>
-     <div class="container">
+    
+    <div class="container">
         <div class="row">
             <div class="col-md-12">
                 <div class="col-md-12 text-right">
@@ -78,20 +95,20 @@
                                     <td class="action-status text-success"></td>
                                     <td>
                                         <% if (facet.ActionsAvailable)
-                                        { %>
+                                            { %>
                                         <button type="button" data-apply-filter="true" data-action="rebuild" data-type="<%=facet.Type%>" class="btn btn-success btn-xs btn-active">Rebuild filtered indexables of this type</button>
                                         <%} %>
                                     </td>
-                                     <td>
+                                    <td>
                                         <% if (facet.ActionsAvailable)
-                                        { %>
+                                            { %>
                                         <button type="button" data-apply-filter="false" data-action="rebuild" data-type="<%=facet.Type%>" class="btn btn-primary btn-xs btn-active">Rebuild all indexables of this type</button>
                                         <%} %>
                                     </td>
                                     <td>
                                         <% if (facet.ActionsAvailable)
-                                           { %>
-                                            <button type="button" data-action="delete" data-type="<%=facet.Type%>" class="btn btn-danger btn-xs btn-active">Delete all indexables of this type</button>
+                                            { %>
+                                        <button type="button" data-action="delete" data-type="<%=facet.Type%>" class="btn btn-danger btn-xs btn-active">Delete all indexables of this type</button>
                                         <%} %>
                                     </td>
                                 </tr>
@@ -115,7 +132,37 @@
             </div>
         </div>
     </div>
+
     <br />
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="col-md-12">
+                <h4>This page lists all indexables available in the <code>sitecore_analytics_index</code> ContentSearch index and their amounts and provides next available actions:</h4>
+                <br />
+                <dl class="dl-horizontal">
+                    <dt>Rebuild all filtered indexables</dt>
+                    <dd><p>This action requests all contacts from collection database and applies contact filters declared in <code>/App_Config/Include/Helpfulcore/Helpfulcore.AnalyticsIndexBuilder.config</code> file under the <code>helpfulcore/analytics.index.builder/collectionDataProvider/Filters</code> configuration node to them and then finally re-builds index for retrieved contact IDs. By default there is a filter for contacts that have not empty identifiers. You are welcome to implement your own filters if required.</p></dd>
+                    <dt>Rebuild all indexables</dt>
+                    <dd><p>This action gets all indexables from collection database (Contacts or Interactions, depending on selected indexable type) and rebuilds index for them.</p></dd>
+                    <dt>Reset analytics index</dt>
+                    <dd><p>This action erases all data which currently exists in the <code>sitecore_analytics_index</code> ContentSearch index.</p></dd>
+                    <dt>Delete all indexablesof this type</dt>
+                    <dd><p>Deletes indexed data of selected type from the <code>sitecore_analytics_index</code> ContentSearch index.</p></dd>
+                    <dt>Rebuild filtered indexables of this type</dt>
+                    <dd><p>This action does same as <code>Rebuild filtered indexables</code> action but only for indexables of selected type.</p></dd>
+                    <dt>Rebuild all indexables of this type</dt>
+                    <dd><p>This action does same as <code>Rebuild all indexables</code> action but only for indexables of selected type.</p></dd>
+                </dl>
+                <br/>
+                <blockquote class="blockquote-reverse">
+                    <p>For more information please have a look at <a href="https://vladimirhil.com" target="_blank">this blog post</a></p>
+                    <footer>Sourse code can be found at <a href="https://github.com/vhil/helpfulcore-analytics-index-builder" target="_blank">GitHub</a></footer>
+                </blockquote>
+            </div>
+        </div>
+    </div>
+</div>
     <br />
     <br />
     <script>
@@ -158,7 +205,7 @@
             if (<%=AnalyticsIndexBuilder.IsBusy.ToString().ToLower()%>)
             {
                 getProgress();
-            }
+        }
 
         });
 
