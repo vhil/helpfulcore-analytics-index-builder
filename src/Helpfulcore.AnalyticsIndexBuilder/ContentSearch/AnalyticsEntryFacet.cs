@@ -9,8 +9,8 @@
             this.ActionsAvailable = actionsAvailable;
         }
 
-        public string Type { get; protected set; }
-        public int Count { get; set; }
-        public bool ActionsAvailable { get; protected set; }
+        public virtual string Type { get; protected set; }
+        public virtual int Count { get; set; }
+        public virtual bool ActionsAvailable { get; protected set; }
     }
 }

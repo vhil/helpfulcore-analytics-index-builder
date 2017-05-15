@@ -7,9 +7,9 @@
     public class AnalyticsEntry
     {
         [IndexField("type")]
-        public string Type { get; set; }
+        public virtual string Type { get; set; }
 
         [IndexField("_uniqueId")]
-        public IIndexableUniqueId UniqueId { get; set; }
+        public virtual IIndexableUniqueId UniqueId { get; set; }
     }
 }

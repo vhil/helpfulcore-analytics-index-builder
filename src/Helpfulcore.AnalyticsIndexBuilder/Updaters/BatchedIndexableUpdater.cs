@@ -42,7 +42,7 @@
             this.ProcessInBatches(this.LoadSourceEntries(parentObjects as IEnumerable<TParentObject>));
         }
 
-        public void ProcessInBatches(IEnumerable<TSourceEntry> sourceEntries)
+        public virtual void ProcessInBatches(IEnumerable<TSourceEntry> sourceEntries)
         {
             if (sourceEntries == null) throw new ArgumentNullException(nameof(sourceEntries));
 
@@ -131,12 +131,12 @@
         protected long updated;
         protected long failed;
 
-        public long Updated => Interlocked.Read(ref this.updated);
-        public long Failed => Interlocked.Read(ref this.failed);
-        public string IndexableType { get; private set; }
+        public virtual long Updated => Interlocked.Read(ref this.updated);
+        public virtual long Failed => Interlocked.Read(ref this.failed);
+        public virtual string IndexableType { get; private set; }
         public event Action StatusChanged;
 
-        public void ChangeLogger(ILoggingService logger)
+        public virtual void ChangeLogger(ILoggingService logger)
         {
             if (logger != null)
             {
@@ -144,12 +144,12 @@
             }
         }
 
-        protected void RaiseStatusChangedEvent()
+        protected virtual void RaiseStatusChangedEvent()
         {
             this.StatusChanged?.Invoke();
         }
 
-        public void ResetStats()
+        public virtual void ResetStats()
         {
             this.updated = 0;
             this.failed = 0;

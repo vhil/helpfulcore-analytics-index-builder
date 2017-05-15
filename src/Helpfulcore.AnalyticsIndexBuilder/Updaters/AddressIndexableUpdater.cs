@@ -48,7 +48,7 @@
             return sourses.SelectMany(this.LoadSourceEntries);
         }
 
-        private IEnumerable<Tuple<string, Guid, IAddress>> LoadSourceEntries(IContact sourse)
+        protected virtual IEnumerable<Tuple<string, Guid, IAddress>> LoadSourceEntries(IContact sourse)
         {
             return this.GetContactAddresses(sourse).Select(address => 
                 new Tuple<string, Guid, IAddress>(address.Key, sourse.Id.Guid, address.Value));

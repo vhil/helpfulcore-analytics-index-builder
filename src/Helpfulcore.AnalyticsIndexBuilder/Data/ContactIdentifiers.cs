@@ -5,7 +5,7 @@
     [Serializable]
     public class ContactIdentifiers
     {
-        public bool IsEmpty { get; set; }
-        public string Identifier { get; set; }
+        public virtual bool IsEmpty { get; set; }
+        public virtual string Identifier { get; set; }
     }
 }

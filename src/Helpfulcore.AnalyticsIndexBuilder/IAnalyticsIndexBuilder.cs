@@ -6,10 +6,7 @@
     using Data;
 
     /// <summary>
-    /// The AnalyticsIndexBuilder abstraction. Provides list of methods for building Sitecore analytics index.
-    /// <para>
-    /// Uses multithreading for parallel indexables building and submits them to the index in batches.
-    /// </para>
+    /// The IAnalyticsIndexBuilder abstraction. Provides list of methods for building Sitecore analytics index.
     /// </summary>
     public interface IAnalyticsIndexBuilder : ILoggerChangeable
     {
@@ -20,7 +17,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index all data taken from Contacts and Interactions collections using the 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// This method is optimized performance-wise so it does from collection database not load data more than once.
@@ -56,7 +53,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index all data taken from Contacts collection using the 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// This method is optimized performance-wise so it does from collection database not load data more than once.
@@ -83,7 +80,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index all data taken from Contacts collection for specified contacts using the 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// This method is optimized performance-wise so it does from collection database not load data more than once.
@@ -109,11 +106,11 @@
         void RebuildContactIndexableTypes(IEnumerable<Guid> contactIds);
 
         /// <summary>
-        /// Rebuilds and submits to index 'visit' indexables taken from Interactions collection using the 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// Rebuilds and submits to index all indexables created from Interactions collection using the 
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
-        /// This includes building of 'visit' indexable type
+        /// This includes building of 'visit', 'visitPage' and 'visitPageEvent' indexable types
         /// </para>
         /// </summary>
         /// <param name="applyFilters">
@@ -122,21 +119,21 @@
         void RebuildVisitIndexableTypes(bool applyFilters);
 
         /// <summary>
-        /// Rebuilds and submits to index 'visit' indexables taken from Contacts collection using 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// Rebuilds and submits to index all indexables created from Interactions collection using the 
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
-        /// Builds only visits of contacts which contact ID's specified in the input parameter.
+        /// This includes building of 'visit', 'visitPage' and 'visitPageEvent' indexable types
         /// </para>
         /// </summary>
         /// <param name="contactIds">
-        /// Specify contact ID's you want to rebuild 'visit' indexables for.
+        /// Specify contact ID's you want to rebuild interaction indexables for.
         /// </param>
         void RebuildVisitIndexableTypes(IEnumerable<Guid> contactIds);
 
         /// <summary>
         /// Rebuilds and submits to index 'contact' indexables taken from Contacts collection using the 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// This includes building of 'contact' indexable type
@@ -149,7 +146,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index 'contact' indexables taken from Contacts collection using 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// Builds only contacts which contact ID's specified in the input parameter.
@@ -162,7 +159,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index 'address' indexables taken from Contacts collection using the 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// This includes building of 'address' indexable type
@@ -175,7 +172,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index 'contact' indexables taken from Contacts collection using 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// Builds only addresses of contacts which contact ID's specified in the input parameter.
@@ -188,7 +185,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index 'contactTag' indexables taken from Contacts collection using the 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// This includes building of 'contactTag' indexable type
@@ -201,7 +198,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index 'contactTag' indexables taken from Contacts collection database using 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// Builds only contactTags of contacts which contact ID's specified in the input parameter.
@@ -214,7 +211,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index 'visit' indexables taken from Interactions collection database using the 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// This includes building of 'visit' indexable type
@@ -227,7 +224,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index 'visit' indexables taken from Interactions collection database using 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// Builds only visits of contacts which contact ID's specified in the input parameter.
@@ -240,7 +237,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index 'visitPage' indexables taken from Interactions collection database using the 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// This includes building of 'visitPage' indexable type
@@ -253,7 +250,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index 'visitPage' indexables taken from Interactions collection database using 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// Builds only visitsPages of contacts which contact ID's specified in the input parameter.
@@ -266,7 +263,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index 'visitPageEvent' indexables taken from Interactions collection database using the 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// This includes building of 'visitPageEvent' indexable type
@@ -279,7 +276,7 @@
 
         /// <summary>
         /// Rebuilds and submits to index 'visitPageEvent' indexables taken from Interactions collection database using 
-        /// <see cref="Helpfulcore.AnalyticsIndexBuilder.ContactSelection.ICollectionDataProvider"/> as a source.
+        /// <see cref="ICollectionDataProvider"/> as a source.
         /// and submits them to the index using <see cref="IAnalyticsSearchService"/>
         /// <para>
         /// Builds only visitsPageEvents of contacts which contact ID's specified in the input parameter.

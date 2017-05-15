@@ -10,7 +10,7 @@
             this.Identifiers = new ContactIdentifiers();
         }
 
-        public Guid _id { get; set; }
-        public ContactIdentifiers Identifiers { get; set; }
+        public virtual Guid _id { get; set; }
+        public virtual ContactIdentifiers Identifiers { get; set; }
     }
 }

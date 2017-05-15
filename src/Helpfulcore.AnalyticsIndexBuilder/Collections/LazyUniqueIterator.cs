@@ -16,7 +16,7 @@
             this.cache = new ConcurrentDictionary<string, TItem>();
         }
 
-        public IEnumerator<TItem> GetEnumerator()
+        public virtual IEnumerator<TItem> GetEnumerator()
         {
             foreach (var item in this.contactsEnumerable)
             {

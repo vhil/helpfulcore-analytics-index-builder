@@ -1,5 +1,4 @@
-﻿
-namespace Helpfulcore.AnalyticsIndexBuilder.Collections
+﻿namespace Helpfulcore.AnalyticsIndexBuilder.Collections
 {
     using Sitecore.Analytics.Aggregation.Data.Model;
 
@@ -12,7 +11,7 @@ namespace Helpfulcore.AnalyticsIndexBuilder.Collections
             this.visit = visit;
         }
 
-        public string UniqueId => $"{this.visit.Contact.Id}_{this.visit.Visit.InteractionId}";
-        public IVisitAggregationContext Value => this.visit;
+        public virtual string UniqueId => $"{this.visit.Contact.Id}_{this.visit.Visit.InteractionId}";
+        public virtual IVisitAggregationContext Value => this.visit;
     }
 }

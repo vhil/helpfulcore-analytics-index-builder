@@ -57,7 +57,7 @@
             }) ?? Enumerable.Empty<Guid>();
         }
 
-        public void ChangeLogger(ILoggingService logger)
+        public virtual void ChangeLogger(ILoggingService logger)
         {
             if (logger != null)
             {
