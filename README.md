@@ -1,19 +1,19 @@
 ### Helpfulcore - helpful features for Sitecore
 # Helpfulcore Analytics Index Builder
 
-##Installation
+## Installation
 To install `Helpfulcore.AnalyticsIndexBuilder` run this command in the Nuget Package Manager console on your Sitecore website project:
 
 > install-package Helpfulcore.AnalyticsIndexBuilder
 
 Or you can find a Sitecore module on the Sitecore Market Place with name `Helpfulcore.AnalyticsIndexBuilder`.
 
-##Compatibility
+## Compatibility
 - Built and tested on Sitecore CMS 8.2 rev 160729 (initial release) and SOLR content search integration.
 - Supposed to work on any Sitecore CMS 8.x and later as well as on both SOLR and Lucene content search providers.
 
 
-##Functionality
+## Functionality
 
 The module installs new Sitecore admin page which can be found by path `<host_name>/sitecore/admin/analyticsindexbuilder.aspx`. The module provides functionality for re-building `sitecore_analytics_index` using data in the collection database. It also includes methods to clean the index if nesessary
 
@@ -37,7 +37,7 @@ The new admin page `<host_name>/sitecore/admin/analyticsindexbuilder.aspx` displ
 
 There is a brief functionality legend at the bottom of new admin page `<host_name>/sitecore/admin/analyticsindexbuilder.aspx`.
 
-##API
+## API
 
 There is an option to use the API provided by the module in your code. The primary object is `AnalyticsIndexBuilder` class.
 Here how you can get an instance of it:
