@@ -43,6 +43,7 @@ There is an option to use the API provided by the module in your code. The prima
 Here how you can get an instance of it:
 
 ```
+using Sitecore.Configuration;
 using Helpfulcore.AnalyticsIndexBuilder;
 ...
 
@@ -52,44 +53,25 @@ var analyticsIndexBuilder = (IAnalyticsIndexBuilder)Factory.CreateObject("helpfu
 Here is the interface which it provides:
 
 ```
-
 public interface IAnalyticsIndexBuilder
 {
 	bool IsBusy { get; }
-
 	void RebuildAllIndexables(bool applyFilters);
-
 	void RebuildContactIndexableTypes(bool applyFilters);
-
 	void RebuildContactIndexableTypes(IEnumerable<Guid> contactIds);
-
 	void RebuildVisitIndexableTypes(bool applyFilters);
-
 	void RebuildVisitIndexableTypes(IEnumerable<Guid> contactIds);
-
 	void RebuildContactIndexables(bool applyFilters);
-
 	void RebuildContactIndexables(IEnumerable<Guid> contactIds);
-
 	void RebuildAddressIndexables(bool applyFilters);
-
 	void RebuildAddressIndexables(IEnumerable<Guid> contactIds);
-
 	void RebuildContactTagIndexables(bool applyFilters);
-
 	void RebuildContactTagIndexables(IEnumerable<Guid> contactIds);
-
 	void RebuildVisitIndexables(bool applyFilters);
-
 	void RebuildVisitIndexables(IEnumerable<Guid> contactIds);
-
 	void RebuildVisitPageIndexables(bool applyFilters);
-
 	void RebuildVisitPageIndexables(IEnumerable<Guid> contactIds);
-
 	void RebuildVisitPageEventIndexables(bool applyFilters);
-
 	void RebuildVisitPageEventIndexables(IEnumerable<Guid> contactIds);
 }
-
 ```
