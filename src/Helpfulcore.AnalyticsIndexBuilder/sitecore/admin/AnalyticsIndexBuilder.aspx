@@ -156,7 +156,7 @@
                 </dl>
                 <br/>
                 <blockquote class="blockquote-reverse">
-                    <p>For more information please have a look at <a href="https://vladimirhil.com" target="_blank">this blog post</a></p>
+                    <p>For more information please have a look at <a href="https://vladimirhil.com/2017/05/16/rebuild-sitecore-analytics-index-without-re-building-reporting-database" target="_blank">this blog post</a></p>
                     <footer>Sourse code can be found at <a href="https://github.com/vhil/helpfulcore-analytics-index-builder" target="_blank">GitHub</a></footer>
                 </blockquote>
             </div>
