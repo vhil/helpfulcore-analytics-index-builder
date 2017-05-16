@@ -6,25 +6,25 @@
     using Sitecore.ContentSearch.Linq;
 
     [Serializable]
-    public class AnalyticsEntryFacetResult
+    public class AnalyticsIndexablesFacetResult
     {
-        public ICollection<AnalyticsEntryFacet> Facets { get; protected set; }
+        public ICollection<AnalyticsIndexablesFacet> Facets { get; protected set; }
 
-        public AnalyticsEntryFacetResult()
+        public AnalyticsIndexablesFacetResult()
         {
-            this.Facets = new List<AnalyticsEntryFacet>
+            this.Facets = new List<AnalyticsIndexablesFacet>
             {
-                new AnalyticsEntryFacet("contact", 0, true),
-                new AnalyticsEntryFacet("address", 0, true),
-                new AnalyticsEntryFacet("contactTag", 0, true),
-                new AnalyticsEntryFacet("visit", 0, true),
-                new AnalyticsEntryFacet("visitPage", 0, true),
-                new AnalyticsEntryFacet("visitPageEvent", 0, true)
+                new AnalyticsIndexablesFacet("contact", 0, true),
+                new AnalyticsIndexablesFacet("address", 0, true),
+                new AnalyticsIndexablesFacet("contactTag", 0, true),
+                new AnalyticsIndexablesFacet("visit", 0, true),
+                new AnalyticsIndexablesFacet("visitPage", 0, true),
+                new AnalyticsIndexablesFacet("visitPageEvent", 0, true)
             };
 
         }
 
-        public AnalyticsEntryFacetResult(FacetResults facetResults)
+        public AnalyticsIndexablesFacetResult(FacetResults facetResults)
             : this()
         {
             var byType = facetResults?.Categories?.FirstOrDefault(x => x.Name.ToLower() == "type");
@@ -32,7 +32,7 @@
             if (byType != null)
             {
                 var nonEmpty = byType.Values.Where(x => x.AggregateCount > 0);
-                var facets = nonEmpty.Select(x => new AnalyticsEntryFacet(x.Name.ToLower(), x.AggregateCount));
+                var facets = nonEmpty.Select(x => new AnalyticsIndexablesFacet(x.Name.ToLower(), x.AggregateCount));
 
                 foreach (var facet in facets.OrderByDescending(c => c.ActionsAvailable).ThenBy(c => c.Type))
                 {

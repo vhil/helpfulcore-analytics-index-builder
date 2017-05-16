@@ -17,7 +17,7 @@
         protected static IAnalyticsIndexBuilder AnalyticsIndexBuilder;
         protected IAnalyticsSearchService AnalyticsSearchService;
         protected ProcessQueueLoggingProvider LogQueue;
-        protected AnalyticsEntryFacetResult AnalyticsIndexFacets;
+        protected AnalyticsIndexablesFacetResult AnalyticsIndexFacets;
          
         public AnalyticsIndexBuilderPage()
         {
@@ -39,7 +39,7 @@
             }
 
             this.AnalyticsSearchService.ChangeLogger(pageLogger);
-            this.AnalyticsIndexFacets = new AnalyticsEntryFacetResult();
+            this.AnalyticsIndexFacets = new AnalyticsIndexablesFacetResult();
         }
 
         protected override void OnLoad(EventArgs e)

@@ -1,8 +1,8 @@
 ﻿namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
 {
-    public class AnalyticsEntryFacet
+    public class AnalyticsIndexablesFacet
     {
-        public AnalyticsEntryFacet(string type, int count, bool actionsAvailable = false)
+        public AnalyticsIndexablesFacet(string type, int count, bool actionsAvailable = false)
         {
             this.Type = type;
             this.Count = count;

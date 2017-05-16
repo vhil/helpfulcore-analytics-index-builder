@@ -4,7 +4,7 @@
     using Sitecore.ContentSearch;
 
     [Serializable]
-    public class AnalyticsEntry
+    public class AnalyticsIndexable
     {
         [IndexField("type")]
         public virtual string Type { get; set; }

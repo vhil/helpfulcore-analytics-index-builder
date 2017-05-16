@@ -13,6 +13,9 @@
     using Lucene.Net.Index;
     using Logging;
 
+    /// <summary>
+    /// Analytics search service. Implementation of <see cref="IAnalyticsSearchService"/>. Performs operations with sitecore analytics content search index.
+    /// </summary>
     public class AnalyticsSearchService : IAnalyticsSearchService
     {
         protected string AnalyticsIndexName => Settings.GetSetting("ContentSearch.Analytics.IndexName", "sitecore_analytics_index"); 
@@ -24,21 +27,33 @@
             this.Logger = logger;
         }
 
-        public virtual AnalyticsEntryFacetResult GetAnalyticsIndexFacets()
+        /// <summary>
+        /// Executes faceted search query to analytics content search index on indexable type.
+        /// </summary>
+        /// <returns>
+        /// Returns aggregated facet search result as <see cref="AnalyticsIndexablesFacetResult"/>
+        /// </returns>
+        public virtual AnalyticsIndexablesFacetResult GetAnalyticsIndexFacets()
         {
             using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateSearchContext())
             {
                 // this includes query filter for type:contact
-                var facets = context.GetQueryable<AnalyticsEntry>().FacetOn(x => x.Type).GetFacets();
-                return new AnalyticsEntryFacetResult(facets);
+                var facets = context.GetQueryable<AnalyticsIndexable>().FacetOn(x => x.Type).GetFacets();
+                return new AnalyticsIndexablesFacetResult(facets);
             }
         }
 
-        public virtual void UpdateIndexables(IEnumerable<AbstractIndexable> indexablesToUpdate)
+        /// <summary>
+        /// Builds indexables into content search documents and submits them to the analytics index.
+        /// </summary>
+        /// <param name="indexables">
+        /// IEnumerable of indexables to submit to analytics index.
+        /// </param>
+        public virtual void UpdateIndexables(IEnumerable<AbstractIndexable> indexables)
         {
-            var indexables = indexablesToUpdate as ICollection<AbstractIndexable> ?? indexablesToUpdate.ToList();
+            var indexablesToUpdate = indexables as ICollection<AbstractIndexable> ?? indexables.ToList();
 
-            this.SafeExecution($"Updating {indexables.Count} indexables in", () =>
+            this.SafeExecution($"Updating {indexablesToUpdate.Count} indexables in", () =>
             {
                 using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateUpdateContext())
                 {
@@ -56,6 +71,12 @@
             });
         }
 
+        /// <summary>
+        /// Deletes all indexables from analytics index by specified indexable type.
+        /// </summary>
+        /// <param name="indexableType">
+        /// Indexable type all entries of which are going to be deleted from index. By default next types are available : 'contact', 'contactTag', 'address', 'visit', 'visitPage', 'visitPageEvent'
+        /// </param>
         public virtual void DeleteIndexablesByType(string indexableType)
         {
             indexableType = indexableType.Trim().ToLower();
@@ -75,6 +96,9 @@
             }, true);
         }
 
+        /// <summary>
+        /// Resets the sitecore analytics content search index. This action erases all data in the index.
+        /// </summary>
         public virtual void ResetIndex()
         {
             this.SafeExecution($"Erasing everything from ", () =>
@@ -90,7 +114,7 @@
         {
             using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateSearchContext())
             {
-                return context.GetQueryable<AnalyticsEntry>().Where(x => x.Type == indexableType).ToList().Select(x => x.UniqueId);
+                return context.GetQueryable<AnalyticsIndexable>().Where(x => x.Type == indexableType).ToList().Select(x => x.UniqueId);
             }
         }
 
@@ -123,14 +147,10 @@
 
         protected virtual void SafeExecution(string actionDescription, Action action, bool info = false)
         {
-            if (info)
-            {
-                this.Logger.Info($"{actionDescription} '{this.AnalyticsIndexName}' content search index...", this);
-            }
-            else
-            {
-                this.Logger.Debug($"{actionDescription} '{this.AnalyticsIndexName}' content search index...", this);
-            }
+            var startMessage = $"{actionDescription} '{this.AnalyticsIndexName}' content search index...";
+
+            if (info) this.Logger.Info(startMessage, this);
+            else this.Logger.Debug(startMessage, this);
 
             try
             {
@@ -142,14 +162,10 @@
             }
             finally
             {
-                if (info)
-                {
-                    this.Logger.Info($"DONE {actionDescription} '{this.AnalyticsIndexName}' content search index.", this);
-                }
-                else
-                {
-                    this.Logger.Debug($"DONE {actionDescription} '{this.AnalyticsIndexName}' content search index.", this);
-                }
+                var endMessage = $"DONE {actionDescription} '{this.AnalyticsIndexName}' content search index.";
+
+                if (info) this.Logger.Info(endMessage, this);
+                else this.Logger.Debug(endMessage, this);
             }
         }
 

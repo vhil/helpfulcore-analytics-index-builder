@@ -130,9 +130,9 @@
     <Compile Include="Data\CollectionDataProvider.cs" />
     <Compile Include="Data\IContactSelectionFilter.cs" />
     <Compile Include="Data\KnownContactsFilter.cs" />
-    <Compile Include="ContentSearch\AnalyticsEntry.cs" />
-    <Compile Include="ContentSearch\AnalyticsEntryFacet.cs" />
-    <Compile Include="ContentSearch\AnalyticsEntryFacetResult.cs" />
+    <Compile Include="ContentSearch\AnalyticsIndexable.cs" />
+    <Compile Include="ContentSearch\AnalyticsIndexablesFacet.cs" />
+    <Compile Include="ContentSearch\AnalyticsIndexablesFacetResult.cs" />
     <Compile Include="AnalyticsIndexBuilder.cs" />
     <Compile Include="ContentSearch\AnalyticsSearchService.cs" />
     <Compile Include="IAnalyticsIndexBuilder.cs" />
