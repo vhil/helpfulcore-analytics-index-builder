@@ -19,18 +19,18 @@
     {
         protected readonly IAnalyticsSearchService AnalyticsSearchService;
         protected readonly IContactFactory ContactFactory;
-        protected readonly int BatchSize;
+        protected readonly int IndexSubmitBatchSize;
         protected readonly int ConcurrentThreads;
 
         protected BatchedIndexableUpdater(
             string indexableType,
             IAnalyticsSearchService analyticsSearchService,
             ILoggingService logger,
-            int batchSize,
+            int indexSubmitBatchSize,
             int concurrentThreads) : base(indexableType, logger)
         {
             this.AnalyticsSearchService = analyticsSearchService;
-            this.BatchSize = batchSize;
+            this.IndexSubmitBatchSize = indexSubmitBatchSize;
             this.ConcurrentThreads = concurrentThreads;
             this.ContactFactory = Factory.CreateObject("model/entities/contact/factory", true) as IContactFactory;
         }
@@ -42,21 +42,21 @@
             this.ProcessInBatches(this.LoadSourceEntries(parentObjects as IEnumerable<TParentObject>));
         }
 
-        public virtual void ProcessInBatches(IEnumerable<TSourceEntry> sourceEntries)
+        public virtual void ProcessInBatches(IEnumerable<TSourceEntry> sourceEntities)
         {
-            if (sourceEntries == null) throw new ArgumentNullException(nameof(sourceEntries));
+            if (sourceEntities == null) throw new ArgumentNullException(nameof(sourceEntities));
 
-            this.updated = 0;
-            this.failed = 0;
+            //this.updated = 0;
+            //this.failed = 0;
             long count = 0;
 
             var sourceList = new List<TSourceEntry>();
-            foreach (var address in sourceEntries)
+            foreach (var entity in sourceEntities)
             {
-                sourceList.Add(address);
+                sourceList.Add(entity);
                 count++;
 
-                if (count%this.BatchSize == 0)
+                if (count%this.IndexSubmitBatchSize == 0)
                 {
                     this.SubmitBatch(sourceList);
                     sourceList.Clear();

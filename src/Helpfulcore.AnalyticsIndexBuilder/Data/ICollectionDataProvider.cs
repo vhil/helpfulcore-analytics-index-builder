@@ -17,9 +17,9 @@
         /// <returns></returns>
         IEnumerable<Guid> GetFilteredContactIdsToReindex();
         IEnumerable<Guid> GetAllContactIdsToReindex();
-        IEnumerable<IContact> GetContacts();
-        IEnumerable<IContact> GetContacts(IEnumerable<Guid> contactIds);
-        IEnumerable<IVisitAggregationContext> GetVisits();
-        IEnumerable<IVisitAggregationContext> GetVisits(IEnumerable<Guid> contactIds);
+        IEnumerable<IEnumerable<IContact>> GetContacts();
+        IEnumerable<IEnumerable<IContact>> GetContacts(IEnumerable<Guid> contactIds);
+        IEnumerable<IEnumerable<IVisitAggregationContext>> GetVisits();
+        IEnumerable<IEnumerable<IVisitAggregationContext>> GetVisits(IEnumerable<Guid> contactIds);
     }
 }

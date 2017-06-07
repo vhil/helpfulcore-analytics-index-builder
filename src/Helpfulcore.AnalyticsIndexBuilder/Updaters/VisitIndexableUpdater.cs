@@ -11,9 +11,9 @@
         public VisitIndexableUpdater(
                 IAnalyticsSearchService analyticsSearchService, 
                 ILoggingService logger, 
-                int batchSize, 
+                int indexSubmitBatchSize, 
                 int concurrentThreads) 
-            : base("type:visit", analyticsSearchService, logger, batchSize, concurrentThreads)
+            : base("type:visit", analyticsSearchService, logger, indexSubmitBatchSize, concurrentThreads)
         {
         }
 

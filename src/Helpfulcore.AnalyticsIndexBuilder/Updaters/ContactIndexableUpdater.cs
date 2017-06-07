@@ -13,9 +13,9 @@
         public ContactIndexableUpdater(
                 IAnalyticsSearchService analyticsSearchService, 
                 ILoggingService logger, 
-                int batchSize, 
+                int indexSubmitBatchSize, 
                 int concurrentThreads) 
-            : base("type:contact", analyticsSearchService, logger, batchSize, concurrentThreads)
+            : base("type:contact", analyticsSearchService, logger, indexSubmitBatchSize, concurrentThreads)
         {
         }
 

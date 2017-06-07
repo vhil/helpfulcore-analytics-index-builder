@@ -1,4 +1,6 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder.Data
+﻿using Sitecore.Configuration;
+
+namespace Helpfulcore.AnalyticsIndexBuilder.Data
 {
     using System;
     using System.Collections;
@@ -10,13 +12,14 @@
     using Sitecore.Analytics.Model;
     using Sitecore.Analytics.Model.Entities;
 
-    using Collections;
     using Logging;
 
     public abstract class CollectionDataProvider : ICollectionDataProvider
     {
         protected ILoggingService Logger;
         public ArrayList Filters { get; protected set; }
+
+        protected virtual int BatchSize => Settings.GetIntSetting("Helpfulcore.AnalyticsIndexBuilder.BatchSize", 1000);
 
         protected CollectionDataProvider(ILoggingService logger)
         {
@@ -81,23 +84,13 @@
             return default(TEntry);
         }
 
-        protected IEnumerable<IVisitAggregationContext> ToLazyIterator(IEnumerable<IVisitAggregationContext> visits)
-        {
-            return new LazyUniqueIterator<LazyVisit, IVisitAggregationContext>(visits.Select(v => new LazyVisit(v)));
-        }
-
-        protected IEnumerable<IContact> ToLazyIterator(IEnumerable<IContact> visits)
-        {
-            return new LazyUniqueIterator<LazyContact, IContact>(visits.Select(v => new LazyContact(v)));
-        }
-
         protected abstract IEnumerable<ContactIdentifiersData> GetContactIdentifiers();
         public abstract IEnumerable<Guid> GetAllContactIdsToReindex();
         public abstract IEnumerable<VisitData> GetVisitDataToReindex();
         public abstract IEnumerable<VisitData> GetVisitDataToReindex(IEnumerable<Guid> contactIds);
-        public abstract IEnumerable<IContact> GetContacts();
-        public abstract IEnumerable<IContact> GetContacts(IEnumerable<Guid> contactIds);
-        public abstract IEnumerable<IVisitAggregationContext> GetVisits();
-        public abstract IEnumerable<IVisitAggregationContext> GetVisits(IEnumerable<Guid> contactIds);
+        public abstract IEnumerable<IEnumerable<IContact>> GetContacts();
+        public abstract IEnumerable<IEnumerable<IContact>> GetContacts(IEnumerable<Guid> contactIds);
+        public abstract IEnumerable<IEnumerable<IVisitAggregationContext>> GetVisits();
+        public abstract IEnumerable<IEnumerable<IVisitAggregationContext>> GetVisits(IEnumerable<Guid> contactIds);
     }
 }

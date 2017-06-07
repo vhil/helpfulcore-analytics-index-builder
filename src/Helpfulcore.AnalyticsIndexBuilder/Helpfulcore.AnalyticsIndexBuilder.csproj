@@ -118,15 +118,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collections\BatchedCollection.cs" />
     <Compile Include="Updaters\ContactTagIndexableUpdater.cs" />
     <Compile Include="Updaters\IBatchedIndexableUpdater.cs" />
     <Compile Include="Updaters\VisitIndexableUpdater.cs" />
     <Compile Include="Updaters\VisitPageEventIndexableUpdater.cs" />
     <Compile Include="Updaters\VisitPageIndexableUpdater.cs" />
-    <Compile Include="Collections\ILazyUniqueItem.cs" />
-    <Compile Include="Collections\LazyContact.cs" />
-    <Compile Include="Collections\LazyUniqueIterator.cs" />
-    <Compile Include="Collections\LazyVisit.cs" />
     <Compile Include="Data\CollectionDataProvider.cs" />
     <Compile Include="Data\IContactSelectionFilter.cs" />
     <Compile Include="Data\KnownContactsFilter.cs" />

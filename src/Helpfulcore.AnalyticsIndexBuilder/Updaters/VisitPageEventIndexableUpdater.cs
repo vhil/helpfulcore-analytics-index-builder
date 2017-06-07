@@ -16,9 +16,9 @@
         public VisitPageEventIndexableUpdater(
                 IAnalyticsSearchService analyticsSearchService, 
                 ILoggingService logger, 
-                int batchSize, 
+                int indexSubmitBatchSize, 
                 int concurrentThreads) 
-            : base("type:visitPageEvent", analyticsSearchService, logger, batchSize, concurrentThreads)
+            : base("type:visitPageEvent", analyticsSearchService, logger, indexSubmitBatchSize, concurrentThreads)
         {
         }
 

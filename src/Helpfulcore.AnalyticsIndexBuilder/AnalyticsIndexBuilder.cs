@@ -7,8 +7,6 @@
     using System.Threading.Tasks;
     using Sitecore.Configuration;
 
-    using Sitecore.Analytics.Model.Entities;
-
     using Data;
     using ContentSearch;
     using Updaters;
@@ -22,7 +20,6 @@
     /// </summary>
     public class AnalyticsIndexBuilder : IAnalyticsIndexBuilder
     {
-        protected readonly int BatchSize;
         protected readonly int ConcurrentThreads;
         protected readonly IAnalyticsSearchService AnalyticsSearchService;
         protected readonly ICollectionDataProvider CollectionDataProvider;
@@ -35,16 +32,17 @@
         private readonly BatchedIndexableUpdater visitPageUpdater;
         private readonly BatchedIndexableUpdater visitPageEventUpdater;
 
+
         public AnalyticsIndexBuilder(
             IAnalyticsSearchService analyticsSearchService, 
             ICollectionDataProvider contactSelector, 
             ILoggingService logger,
-            string batchSize = "1000",
+            string indexSubmitBatchSize = "1000",
             string concurrentThreads = "4"): this(
                 analyticsSearchService, 
                 contactSelector, 
                 logger, 
-                int.Parse(batchSize), 
+                int.Parse(indexSubmitBatchSize),
                 int.Parse(concurrentThreads))
         {
         }
@@ -53,7 +51,7 @@
             IAnalyticsSearchService analyticsSearchService,
             ICollectionDataProvider contactSelector,
             ILoggingService logger,
-            int batchSize = 1000,
+            int indexSubmitBatchSize = 1000,
             int concurrentThreads = 4)
         {
             if (analyticsSearchService == null) throw new ArgumentNullException(nameof(analyticsSearchService));
@@ -63,15 +61,14 @@
             this.AnalyticsSearchService = analyticsSearchService;
             this.CollectionDataProvider = contactSelector;
             this.Logger = logger;
-            this.BatchSize = batchSize;
             this.ConcurrentThreads = concurrentThreads;
 
-            this.addressUpdater        =        new AddressIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
-            this.contactUpdater        =        new ContactIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
-            this.contactTagUpdater     =     new ContactTagIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
-            this.visitUpdater          =          new VisitIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
-            this.visitPageUpdater      =      new VisitPageIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
-            this.visitPageEventUpdater = new VisitPageEventIndexableUpdater(this.AnalyticsSearchService, this.Logger, this.BatchSize, this.ConcurrentThreads);
+            this.addressUpdater        =        new AddressIndexableUpdater(this.AnalyticsSearchService, this.Logger, indexSubmitBatchSize, this.ConcurrentThreads);
+            this.contactUpdater        =        new ContactIndexableUpdater(this.AnalyticsSearchService, this.Logger, indexSubmitBatchSize, this.ConcurrentThreads);
+            this.contactTagUpdater     =     new ContactTagIndexableUpdater(this.AnalyticsSearchService, this.Logger, indexSubmitBatchSize, this.ConcurrentThreads);
+            this.visitUpdater          =          new VisitIndexableUpdater(this.AnalyticsSearchService, this.Logger, indexSubmitBatchSize, this.ConcurrentThreads);
+            this.visitPageUpdater      =      new VisitPageIndexableUpdater(this.AnalyticsSearchService, this.Logger, indexSubmitBatchSize, this.ConcurrentThreads);
+            this.visitPageEventUpdater = new VisitPageEventIndexableUpdater(this.AnalyticsSearchService, this.Logger, indexSubmitBatchSize, this.ConcurrentThreads);
 
             this.addressUpdater.StatusChanged += this.OnUpdatersStatusChanged;
             this.contactUpdater.StatusChanged += this.OnUpdatersStatusChanged;
@@ -87,6 +84,7 @@
         public virtual bool IsBusy { get; protected set; }
 
         protected virtual bool XdbEnabled => Settings.GetBoolSetting("Xdb.Enabled", false);
+        protected virtual int BatchSize => Settings.GetIntSetting("Helpfulcore.AnalyticsIndexBuilder.BatchSize", 1000);
 
         /// <summary>
         /// Rebuilds and submits to index all data taken from Contacts and Interactions collections using the 
@@ -128,24 +126,47 @@
             {
                 var contactIds = this.LoadContactIds(applyFilters);
 
-                var contacts = this.CollectionDataProvider.GetContacts(contactIds);
+                var contactBatches = this.CollectionDataProvider.GetContacts(contactIds);
 
-                var visits = applyFilters 
+                var visitBatches = applyFilters
                     ? this.CollectionDataProvider.GetVisits(contactIds)
                     : this.CollectionDataProvider.GetVisits();
 
-                var updateTasks = new Action[]
+                var batchedTasks = new Action[]
                 {
-                    () => { this.contactUpdater.ProcessInBatches(contacts); },
-                    () => { this.addressUpdater.ProcessInBatches(contacts); },
-                    () => { this.contactTagUpdater.ProcessInBatches(contacts); },
-                    () => { this.visitUpdater.ProcessInBatches(visits); },
-                    () => { this.visitPageUpdater.ProcessInBatches(visits); },
-                    () => { this.visitPageEventUpdater.ProcessInBatches(visits); },
+                    () => {
+                        foreach (var contactBatch in contactBatches)
+                        {
+                            var updateTasks = new Action[]
+                            {
+                                () => { this.contactUpdater.ProcessInBatches(contactBatch); },
+                                () => { this.addressUpdater.ProcessInBatches(contactBatch); },
+                                () => { this.contactTagUpdater.ProcessInBatches(contactBatch); },
+                            };
+
+                            var options = new ParallelOptions { MaxDegreeOfParallelism = updateTasks.Length };
+                            Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+                        }},
+
+                    () => {
+                        foreach (var visitBatch in visitBatches)
+                        {
+                            var updateTasks = new Action[]
+                            {
+                                () => { this.visitUpdater.ProcessInBatches(visitBatch); },
+                                () => { this.visitPageUpdater.ProcessInBatches(visitBatch); },
+                                () => { this.visitPageEventUpdater.ProcessInBatches(visitBatch); },
+                            };
+
+                            var options = new ParallelOptions { MaxDegreeOfParallelism = updateTasks.Length };
+                            Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+                        }},
                 };
 
-                var options = new ParallelOptions { MaxDegreeOfParallelism = 3 };
-                Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+                Parallel.ForEach(
+                    batchedTasks, 
+                    new ParallelOptions { MaxDegreeOfParallelism = batchedTasks.Length }, 
+                    task => { task.Invoke(); });
             });
         }
 
@@ -212,15 +233,18 @@
             {
                 var contacts = this.CollectionDataProvider.GetContacts(ids);
 
-                var updateTasks = new Action[]
+                foreach (var batch in contacts)
                 {
-                    () => { this.addressUpdater.ProcessInBatches(contacts); },
-                    () => { this.contactUpdater.ProcessInBatches(contacts); },
-                    () => { this.contactTagUpdater.ProcessInBatches(contacts); },
-                };
+                    var updateTasks = new Action[]
+                    {
+                        () => { this.addressUpdater.ProcessInBatches(batch); },
+                        () => { this.contactUpdater.ProcessInBatches(batch); },
+                        () => { this.contactTagUpdater.ProcessInBatches(batch); },
+                    };
 
-                var options = new ParallelOptions { MaxDegreeOfParallelism = updateTasks.Length };
-                Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+                    var options = new ParallelOptions { MaxDegreeOfParallelism = updateTasks.Length };
+                    Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+                }
             });
         }
 
@@ -262,15 +286,18 @@
                     ? this.CollectionDataProvider.GetVisits()
                     : this.CollectionDataProvider.GetVisits(ids);
 
-                var updateTasks = new Action[]
+                foreach (var batch in visits)
                 {
-                    () => { this.visitUpdater.ProcessInBatches(visits); },
-                    () => { this.visitPageUpdater.ProcessInBatches(visits); },
-                    () => { this.visitPageEventUpdater.ProcessInBatches(visits); },
-                };
+                    var updateTasks = new Action[]
+                    {
+                        () => { this.visitUpdater.ProcessInBatches(batch); },
+                        () => { this.visitPageUpdater.ProcessInBatches(batch); },
+                        () => { this.visitPageEventUpdater.ProcessInBatches(batch); },
+                    };
 
-                var options = new ParallelOptions { MaxDegreeOfParallelism = updateTasks.Length };
-                Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+                    var options = new ParallelOptions { MaxDegreeOfParallelism = updateTasks.Length };
+                    Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+                }
             });
         }
 
@@ -515,8 +542,12 @@
             this.SafeExecution($"rebuilding {(applyFilters ? "filtered " : "")}[{updater.IndexableType}] indexables index", () =>
             {
                 var contactIds = this.LoadContactIds(applyFilters);
+                var contactBatches = this.CollectionDataProvider.GetContacts(contactIds);
 
-                updater.ProcessInBatches(this.CollectionDataProvider.GetContacts(contactIds));
+                foreach (var contactBatch in contactBatches)
+                {
+                    updater.ProcessInBatches(contactBatch);
+                }
             });
         }
 
@@ -526,7 +557,11 @@
 
             this.SafeExecution($"rebuilding [{updater.IndexableType}] indexables index for {ids.Count} contacts", () =>
             {
-                updater.ProcessInBatches(this.CollectionDataProvider.GetContacts(ids));
+                var contactBatches = this.CollectionDataProvider.GetContacts(ids);
+                foreach (var contactBatch in contactBatches)
+                {
+                    updater.ProcessInBatches(contactBatch);
+                }
             });
         }
 
@@ -534,11 +569,14 @@
         {
             this.SafeExecution($"rebuilding {(applyFilters ? "filtered " : "")}[{updater.IndexableType}] indexables index", () =>
             {
-                var visits = applyFilters
+                var visitBatches = applyFilters
                     ? this.CollectionDataProvider.GetVisits(this.LoadContactIds(true))
                     : this.CollectionDataProvider.GetVisits();
 
-                updater.ProcessInBatches(visits);
+                foreach (var visitBatch in visitBatches)
+                {
+                    updater.ProcessInBatches(visitBatch);
+                }
             });
         }
 
@@ -548,7 +586,12 @@
 
             this.SafeExecution($"rebuilding [{updater.IndexableType}] indexables index for {ids.Count} contacts", () =>
             {
-                updater.ProcessInBatches(this.CollectionDataProvider.GetVisits(ids));
+                var visitBatches = this.CollectionDataProvider.GetVisits(ids);
+
+                foreach (var visitBatch in visitBatches)
+                {
+                    updater.ProcessInBatches(visitBatch);
+                }
             });
         }
 
@@ -559,11 +602,6 @@
                 : this.CollectionDataProvider.GetAllContactIdsToReindex();
 
             return contactIds as ICollection<Guid> ?? contactIds.ToArray();
-        }
-
-        protected virtual IEnumerable<IContact> LoadContacts(bool applyFilters)
-        {
-            return this.CollectionDataProvider.GetContacts(this.LoadContactIds(applyFilters));
         }
 
         protected virtual void SafeExecution(string actionDescription, Action action)

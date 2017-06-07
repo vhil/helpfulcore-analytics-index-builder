@@ -16,8 +16,8 @@
         public AddressIndexableUpdater(
             IAnalyticsSearchService analyticsSearchService, 
             ILoggingService logger, 
-            int batchSize, 
-            int concurrentThreads) : base("type:address", analyticsSearchService, logger, batchSize, concurrentThreads)
+            int indexSubmitBatchSize, 
+            int concurrentThreads) : base("type:address", analyticsSearchService, logger, indexSubmitBatchSize, concurrentThreads)
         {
         }
 
