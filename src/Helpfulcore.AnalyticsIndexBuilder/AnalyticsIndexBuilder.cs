@@ -146,6 +146,7 @@
 
                             var options = new ParallelOptions { MaxDegreeOfParallelism = updateTasks.Length };
                             Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+                            GC.Collect();
                         }},
 
                     () => {
@@ -160,6 +161,7 @@
 
                             var options = new ParallelOptions { MaxDegreeOfParallelism = updateTasks.Length };
                             Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+                            GC.Collect();
                         }},
                 };
 
@@ -244,6 +246,7 @@
 
                     var options = new ParallelOptions { MaxDegreeOfParallelism = updateTasks.Length };
                     Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+                    GC.Collect();
                 }
             });
         }
@@ -297,6 +300,7 @@
 
                     var options = new ParallelOptions { MaxDegreeOfParallelism = updateTasks.Length };
                     Parallel.ForEach(updateTasks, options, task => { task.Invoke(); });
+                    GC.Collect();
                 }
             });
         }
@@ -547,6 +551,7 @@
                 foreach (var contactBatch in contactBatches)
                 {
                     updater.ProcessInBatches(contactBatch);
+                    GC.Collect();
                 }
             });
         }
@@ -561,6 +566,7 @@
                 foreach (var contactBatch in contactBatches)
                 {
                     updater.ProcessInBatches(contactBatch);
+                    GC.Collect();
                 }
             });
         }
@@ -576,6 +582,7 @@
                 foreach (var visitBatch in visitBatches)
                 {
                     updater.ProcessInBatches(visitBatch);
+                    GC.Collect();
                 }
             });
         }
@@ -591,6 +598,7 @@
                 foreach (var visitBatch in visitBatches)
                 {
                     updater.ProcessInBatches(visitBatch);
+                    GC.Collect();
                 }
             });
         }
@@ -635,6 +643,7 @@
             {
                 this.IsBusy = false;
                 this.Logger.Info($"DONE {actionDescription}.", this);
+                GC.Collect();
             }
         }
 
