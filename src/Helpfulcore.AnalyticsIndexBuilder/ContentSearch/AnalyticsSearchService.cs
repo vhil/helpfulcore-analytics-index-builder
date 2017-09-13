@@ -1,4 +1,6 @@
-﻿namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
+﻿using Lucene.Net.Documents;
+
+namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
 {
     using System;
     using System.Collections.Concurrent;
@@ -103,7 +105,7 @@
         {
             this.SafeExecution($"Erasing everything from ", () =>
             {
-                using (var index = ContentSearchManager.GetIndex(this.AnalyticsIndexName))
+	            var index = ContentSearchManager.GetIndex(this.AnalyticsIndexName);
                 {
                     index.Reset();
                 }
@@ -118,7 +120,7 @@
             }
         }
 
-        protected virtual Dictionary<string, object> BuildIndexableDocument(IIndexable indexable, IProviderUpdateContext context)
+        protected virtual object BuildIndexableDocument(IIndexable indexable, IProviderUpdateContext context)
         {
             var sitecoreIndexableItem = indexable as SitecoreIndexableItem;
             if (sitecoreIndexableItem != null)
@@ -130,22 +132,51 @@
                 context.Index.Configuration.DocumentBuilderType,
                 new[] { indexable, context as object });
 
-            var documentBuilder = (AbstractDocumentBuilder<ConcurrentDictionary<string, object>>)builderObject;
+	        var document = this.BuildSolrDocument(builderObject) ?? this.BuildLuceneDocument(builderObject);
 
-            if (documentBuilder == null)
-            {
-                throw new InvalidOperationException("Unable to create AbstractDocumentBuilder.");
-            }
+	        if (document == null)
+	        {
+				throw new InvalidCastException("Unable to cast builder object.");
+	        }
 
-            documentBuilder.AddSpecialFields();
-            documentBuilder.AddItemFields();
-            documentBuilder.AddComputedIndexFields();
-            documentBuilder.AddBoost();
-
-            return documentBuilder.Document.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+	        return document;
         }
 
-        protected virtual void SafeExecution(string actionDescription, Action action, bool info = false)
+	    protected virtual Document BuildLuceneDocument(object builderObject)
+	    {
+		    var documentBuilder = builderObject as AbstractDocumentBuilder<Document>;
+
+		    if (documentBuilder == null)
+		    {
+			    return null;
+		    }
+
+		    documentBuilder.AddSpecialFields();
+		    documentBuilder.AddItemFields();
+		    documentBuilder.AddComputedIndexFields();
+		    documentBuilder.AddBoost();
+
+		    return documentBuilder.Document;
+	    }
+
+	    protected virtual object BuildSolrDocument(object builderObject)
+		{
+			var documentBuilder = builderObject as AbstractDocumentBuilder<ConcurrentDictionary<string, object>>;
+
+			if (documentBuilder == null)
+			{
+				return null;
+			}
+
+			documentBuilder.AddSpecialFields();
+			documentBuilder.AddItemFields();
+			documentBuilder.AddComputedIndexFields();
+			documentBuilder.AddBoost();
+
+			return documentBuilder.Document.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+		}
+
+	    protected virtual void SafeExecution(string actionDescription, Action action, bool info = false)
         {
             var startMessage = $"{actionDescription} '{this.AnalyticsIndexName}' content search index...";
 
