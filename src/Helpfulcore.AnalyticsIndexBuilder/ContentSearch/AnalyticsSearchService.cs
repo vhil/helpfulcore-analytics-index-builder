@@ -1,4 +1,5 @@
-﻿using Lucene.Net.Documents;
+﻿using System.Threading.Tasks;
+using Sitecore.ContentSearch.Utilities;
 
 namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
 {
@@ -14,14 +15,17 @@ namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
 
     using Lucene.Net.Index;
     using Logging;
+	using Sitecore.ContentSearch.LuceneProvider;
 
-    /// <summary>
-    /// Analytics search service. Implementation of <see cref="IAnalyticsSearchService"/>. Performs operations with sitecore analytics content search index.
-    /// </summary>
-    public class AnalyticsSearchService : IAnalyticsSearchService
+	/// <summary>
+	/// Analytics search service. Implementation of <see cref="IAnalyticsSearchService"/>. Performs operations with sitecore analytics content search index.
+	/// </summary>
+	public class AnalyticsSearchService : IAnalyticsSearchService
     {
-        protected string AnalyticsIndexName => Settings.GetSetting("ContentSearch.Analytics.IndexName", "sitecore_analytics_index"); 
-        protected ILoggingService Logger;
+        protected string AnalyticsIndexName => Settings.GetSetting("ContentSearch.Analytics.IndexName", "sitecore_analytics_index");
+	    protected int SearchMaxResults => Settings.GetIntSetting("ContentSearch.SearchMaxResults", 1024);
+
+		protected ILoggingService Logger;
 
         public AnalyticsSearchService(ILoggingService logger)
         {
@@ -103,22 +107,59 @@ namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
         /// </summary>
         public virtual void ResetIndex()
         {
-            this.SafeExecution($"Erasing everything from ", () =>
+            this.SafeExecution($"Reseting ", () =>
             {
 	            var index = ContentSearchManager.GetIndex(this.AnalyticsIndexName);
-                {
-                    index.Reset();
-                }
+
+				index.Reset();
+                index.Initialize();
+
             }, true);
         }
 
         protected virtual IEnumerable<IIndexableUniqueId> GetAllUniqueIdsByType(string indexableType)
         {
-            using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateSearchContext())
-            {
-                return context.GetQueryable<AnalyticsIndexable>().Where(x => x.Type == indexableType).ToList().Select(x => x.UniqueId);
+	        int totalCount;
+	        var pageSize = this.SearchMaxResults;
+
+			using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateSearchContext())
+			{
+				var queryable = context.GetQueryable<AnalyticsIndexable>()
+					.Where(x => x.Type == indexableType);
+
+				var facets = queryable.FacetOn(x => x.Type).GetFacets();
+	            var typeCategory = facets.Categories.First();
+	            var contactsCategory = typeCategory.Values.First(x => x.Name == indexableType);
+	            totalCount = contactsCategory.AggregateCount;
             }
-        }
+
+	        var dic = new ConcurrentDictionary<string, IIndexableUniqueId>();
+			var lastPage = totalCount / pageSize + 1;
+			var options = new ParallelOptions { MaxDegreeOfParallelism = 4 };
+
+	        Parallel.For(0, lastPage, options, pageNumber =>
+	        {
+		        using (var context = ContentSearchManager.GetIndex(this.AnalyticsIndexName).CreateSearchContext())
+		        {
+			        var queryable = context.GetQueryable<AnalyticsIndexable>()
+					    .Where(x => x.Type == indexableType)
+				        .Skip(pageNumber * pageSize)
+				        .Take(pageSize);
+
+			        var results = queryable.GetResults();
+
+			        foreach (var indexable in results.Select(x => x.Document))
+			        {
+				        if (!dic.ContainsKey(indexable.UniqueId.ToString()))
+				        {
+					        dic.TryAdd(indexable.UniqueId.ToString(), indexable.UniqueId);
+				        }
+			        }
+		        }
+	        });
+
+	        return dic.Values;
+		}
 
         protected virtual object BuildIndexableDocument(IIndexable indexable, IProviderUpdateContext context)
         {
@@ -132,7 +173,7 @@ namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
                 context.Index.Configuration.DocumentBuilderType,
                 new[] { indexable, context as object });
 
-	        var document = this.BuildSolrDocument(builderObject) ?? this.BuildLuceneDocument(builderObject);
+	        var document = this.BuildSolrDocument(builderObject) ?? this.BuildLuceneDocument(builderObject, indexable);
 
 	        if (document == null)
 	        {
@@ -142,9 +183,9 @@ namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
 	        return document;
         }
 
-	    protected virtual Document BuildLuceneDocument(object builderObject)
+	    protected virtual object BuildLuceneDocument(object builderObject, IIndexable indexable)
 	    {
-		    var documentBuilder = builderObject as AbstractDocumentBuilder<Document>;
+		    var documentBuilder = builderObject as LuceneDocumentBuilder;
 
 		    if (documentBuilder == null)
 		    {
@@ -156,7 +197,7 @@ namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
 		    documentBuilder.AddComputedIndexFields();
 		    documentBuilder.AddBoost();
 
-		    return documentBuilder.Document;
+		    return new IndexData(ContentSearchManager.GetIndex(this.AnalyticsIndexName), indexable, documentBuilder).BuildDocument();
 	    }
 
 	    protected virtual object BuildSolrDocument(object builderObject)
