@@ -1,7 +1,4 @@
-﻿using System.Threading.Tasks;
-using Sitecore.ContentSearch.Utilities;
-
-namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
+﻿namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
 {
     using System;
     using System.Collections.Concurrent;
@@ -16,6 +13,7 @@ namespace Helpfulcore.AnalyticsIndexBuilder.ContentSearch
     using Lucene.Net.Index;
     using Logging;
 	using Sitecore.ContentSearch.LuceneProvider;
+    using System.Threading.Tasks;
 
 	/// <summary>
 	/// Analytics search service. Implementation of <see cref="IAnalyticsSearchService"/>. Performs operations with sitecore analytics content search index.
