@@ -1,7 +1,9 @@
 ﻿namespace Helpfulcore.AnalyticsIndexBuilder.Data
 {
     using System;
+    using MongoDB.Bson.Serialization.Attributes;
 
+    [BsonIgnoreExtraElements]
     [Serializable]
     public class ContactIdentifiersData
     {
