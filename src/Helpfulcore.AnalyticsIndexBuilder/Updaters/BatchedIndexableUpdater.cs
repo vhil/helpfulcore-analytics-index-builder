@@ -103,6 +103,10 @@
             var options = new ParallelOptions { MaxDegreeOfParallelism = this.ConcurrentThreads };
             Parallel.ForEach(sourceEntries.Distinct(), options, source =>
             {
+                if(source == null)
+                {
+                    return;
+                }
                 // this will execute "[indexable-name].loadfields" pipeline to load field values;
                 var indexable = this.ConstructIndexable(source);
 
