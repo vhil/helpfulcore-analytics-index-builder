@@ -29,9 +29,18 @@
         protected virtual Dictionary<string, IAddress> GetContactAddresses(IFaceted contact)
         {
             var dictionary = new Dictionary<string, IAddress>();
-            var facet = contact.Facets.FirstOrDefault(kvp => kvp.Value is IContactAddresses).Value;
 
-            if (facet != null)
+	        if (contact?.Facets == null) return dictionary;
+
+	        var pair = contact.Facets.FirstOrDefault(kvp => kvp.Value is IContactAddresses);
+	        IFacet facet = null;
+
+			if (!pair.Equals(default(KeyValuePair<string, IFacet>)))
+	        {
+		        facet = contact.Facets.FirstOrDefault(kvp => kvp.Value is IContactAddresses).Value;
+			}
+
+			if (facet != null)
             {
                 var contactAddresses = (IContactAddresses)facet;
                 foreach (var key in contactAddresses.Entries.Keys)
